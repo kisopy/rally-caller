@@ -1,33 +1,41 @@
-<title>Rally Caller</title>
+<title>Mac Badminton Rally Caller</title>
 
 <style>
   /* ---------- tokens ---------- */
   :root {
-    --court-a:        #0C4A8F;
-    --court-a-lift:   #1668BE;
-    --court-b:        #0E7A46;
-    --court-b-lift:   #17A85F;
+    --court-a: #0c4a8f;
+    --court-a-lift: #1668be;
+    --court-b: #0e7a46;
+    --court-b-lift: #17a85f;
 
-    --line:           #EEF2EE;
-    --surround:       #08110F;
-    --surround-lift:  #0E1B18;
-    --cork:           #D6A55C;
+    --line: #eef2ee;
+    --surround: #08110f;
+    --surround-lift: #0e1b18;
+    --cork: #d6a55c;
     /* signal colours — kept separate from the accent and from the court greens */
-    --live:           #4ED08A;
-    --pending:        #E8B45C;
-    --ink:            #E9EFEA;
-    --ink-dim:        rgba(233, 239, 234, 0.58);
-    --ink-faint:      rgba(233, 239, 234, 0.30);
+    --live: #4ed08a;
+    --pending: #e8b45c;
+    --ink: #e9efea;
+    --ink-dim: rgba(233, 239, 234, 0.58);
+    --ink-faint: rgba(233, 239, 234, 0.3);
 
-    --f-display: "DIN Condensed", "DIN Alternate", "Oswald", "Roboto Condensed", "Arial Narrow", sans-serif;
-    --f-ui: "Avenir Next", "Avenir", "Futura", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --f-display:
+      "DIN Condensed", "DIN Alternate", "Oswald", "Roboto Condensed",
+      "Arial Narrow", sans-serif;
+    --f-ui:
+      "Avenir Next", "Avenir", "Futura", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", sans-serif;
 
     --bar-h: 4.75rem;
     --pad-t: env(safe-area-inset-top, 0px);
     --pad-b: env(safe-area-inset-bottom, 0px);
   }
 
-  *, *::before, *::after { box-sizing: border-box; }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
   body {
     margin: 0;
@@ -76,24 +84,70 @@
     overflow: hidden;
     transition: filter 140ms ease;
   }
-  .side--a { background: linear-gradient(170deg, var(--court-a-lift) -30%, var(--court-a) 55%, #08325F 130%); }
-  .side--b { background: linear-gradient(170deg, var(--court-b-lift) -30%, var(--court-b) 55%, #08512D 130%); }
-  .side:active { filter: brightness(1.14); }
-  .side:focus-visible { outline: 3px solid var(--line); outline-offset: -6px; }
+  .side--a {
+    background: linear-gradient(
+      170deg,
+      var(--court-a-lift) -30%,
+      var(--court-a) 55%,
+      #08325f 130%
+    );
+  }
+  .side--b {
+    background: linear-gradient(
+      170deg,
+      var(--court-b-lift) -30%,
+      var(--court-b) 55%,
+      #08512d 130%
+    );
+  }
+  .side:active {
+    filter: brightness(1.14);
+  }
+  .side:focus-visible {
+    outline: 3px solid var(--line);
+    outline-offset: -6px;
+  }
 
   /* court markings, seen from above; net is the shared inner edge */
-  .lines { position: absolute; inset: 0; pointer-events: none; }
-  .side--b .lines { transform: scaleX(-1); }
+  .lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .side--b .lines {
+    transform: scaleX(-1);
+  }
   .lines .box {
     position: absolute;
-    top: 7%; bottom: 7%; left: 5%; right: 0;
-    border: 2px solid rgba(255,255,255,0.14);
+    top: 7%;
+    bottom: 7%;
+    left: 5%;
+    right: 0;
+    border: 2px solid rgba(255, 255, 255, 0.14);
     border-right: 0;
   }
-  .lines i { position: absolute; background: rgba(255,255,255,0.13); }
-  .lines .short  { top: 7%; bottom: 7%; right: 30%; width: 2px; }
-  .lines .centre { top: 50%; left: 5%; right: 30%; height: 2px; }
-  .lines .long   { top: 7%; bottom: 7%; left: 13%; width: 2px; }
+  .lines i {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.13);
+  }
+  .lines .short {
+    top: 7%;
+    bottom: 7%;
+    right: 30%;
+    width: 2px;
+  }
+  .lines .centre {
+    top: 50%;
+    left: 5%;
+    right: 30%;
+    height: 2px;
+  }
+  .lines .long {
+    top: 7%;
+    bottom: 7%;
+    left: 13%;
+    width: 2px;
+  }
 
   /* Size is set by fitName() in JS so the name fills its half of the court.
      The clamp here is only the pre-measurement value. */
@@ -107,8 +161,8 @@
     text-transform: uppercase;
     text-align: center;
     overflow-wrap: break-word;
-    color: #FFFFFF;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.36);
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.36);
   }
 
   .score {
@@ -119,11 +173,23 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
-    text-shadow: 0 0.06em 0.3em rgba(0,0,0,0.28);
+    text-shadow: 0 0.06em 0.3em rgba(0, 0, 0, 0.28);
     will-change: transform;
   }
-  .score.pop { animation: pop 300ms cubic-bezier(.2,1.5,.4,1); }
-  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.13); } 100% { transform: scale(1); } }
+  .score.pop {
+    animation: pop 300ms cubic-bezier(0.2, 1.5, 0.4, 1);
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.13);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
 
   .foot {
     position: relative;
@@ -132,37 +198,65 @@
     gap: 0.5rem;
     min-height: 1.5rem;
   }
-  .pips { display: flex; gap: 0.3125rem; }
-  .pips b {
-    width: 0.5rem; height: 0.5rem; border-radius: 50%;
-    background: rgba(255,255,255,0.22);
-    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.35);
+  .pips {
+    display: flex;
+    gap: 0.3125rem;
   }
-  .pips b.won { background: var(--line); box-shadow: none; }
+  .pips b {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.35);
+  }
+  .pips b.won {
+    background: var(--line);
+    box-shadow: none;
+  }
 
-  .shuttle { width: 1.375rem; height: 1.375rem; opacity: 0; transition: opacity 180ms ease; }
-  .shuttle.on { opacity: 1; }
+  .shuttle {
+    width: 1.375rem;
+    height: 1.375rem;
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+  .shuttle.on {
+    opacity: 1;
+  }
 
   /* net */
   .net {
     position: absolute;
-    top: 0; bottom: 0; left: 50%;
+    top: 0;
+    bottom: 0;
+    left: 50%;
     width: 4px;
     margin-left: -2px;
-    background:
-      repeating-linear-gradient(45deg, rgba(255,255,255,0.5) 0 2px, rgba(255,255,255,0.16) 2px 5px);
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.22), 0 0 18px rgba(0,0,0,0.3);
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.5) 0 2px,
+      rgba(255, 255, 255, 0.16) 2px 5px
+    );
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.22),
+      0 0 18px rgba(0, 0, 0, 0.3);
     pointer-events: none;
   }
-  .net::before, .net::after {
+  .net::before,
+  .net::after {
     content: "";
     position: absolute;
-    left: -1px; right: -1px;
+    left: -1px;
+    right: -1px;
     height: 1.75rem;
     background: var(--line);
   }
-  .net::before { top: 0; }
-  .net::after { bottom: 0; }
+  .net::before {
+    top: 0;
+  }
+  .net::after {
+    bottom: 0;
+  }
 
   /* status chip on the net */
   .status {
@@ -178,7 +272,9 @@
     padding: 0.4375rem 0.875rem;
     border-radius: 999px;
     background: rgba(8, 17, 15, 0.82);
-    box-shadow: 0 0 0 1px rgba(238,242,238,0.16), 0 6px 22px rgba(0,0,0,0.4);
+    box-shadow:
+      0 0 0 1px rgba(238, 242, 238, 0.16),
+      0 6px 22px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     font-size: 0.6875rem;
@@ -189,7 +285,9 @@
     white-space: nowrap;
     pointer-events: none;
   }
-  .status .hot { color: var(--cork); }
+  .status .hot {
+    color: var(--cork);
+  }
 
   /* game / match overlay */
   .over {
@@ -201,12 +299,14 @@
     justify-items: center;
     gap: 1.25rem;
     padding: 1.5rem;
-    background: rgba(8, 17, 15, 0.80);
+    background: rgba(8, 17, 15, 0.8);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     text-align: center;
   }
-  .over.on { display: grid; }
+  .over.on {
+    display: grid;
+  }
   .over .kind {
     font-family: var(--f-display);
     font-size: clamp(3.5rem, 17vw, 9rem);
@@ -239,7 +339,7 @@
     gap: 0.75rem;
     padding: 0 1rem calc(var(--pad-b));
     background: var(--surround);
-    box-shadow: 0 -1px 0 rgba(238,242,238,0.10);
+    box-shadow: 0 -1px 0 rgba(238, 242, 238, 0.1);
   }
 
   .heard {
@@ -251,8 +351,8 @@
     max-width: min(88vw, 26rem);
     padding: 0.375rem 0.75rem;
     border-radius: 999px;
-    background: rgba(8,17,15,0.86);
-    box-shadow: 0 0 0 1px rgba(238,242,238,0.14);
+    background: rgba(8, 17, 15, 0.86);
+    box-shadow: 0 0 0 1px rgba(238, 242, 238, 0.14);
     font-size: 0.75rem;
     letter-spacing: 0.02em;
     color: var(--ink-dim);
@@ -263,8 +363,12 @@
     transition: opacity 180ms ease;
     pointer-events: none;
   }
-  .heard.on { opacity: 1; }
-  .heard.warn { color: #F5C77E; }
+  .heard.on {
+    opacity: 1;
+  }
+  .heard.warn {
+    color: #f5c77e;
+  }
 
   .btn {
     display: inline-flex;
@@ -276,7 +380,7 @@
     border: 0;
     border-radius: 999px;
     background: var(--surround-lift);
-    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.16);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.16);
     color: var(--ink);
     font-family: var(--f-ui);
     font-size: 0.6875rem;
@@ -284,17 +388,35 @@
     letter-spacing: 0.13em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 140ms ease, opacity 140ms ease;
+    transition:
+      background 140ms ease,
+      opacity 140ms ease;
   }
-  .btn:active { background: #172926; }
-  .btn:disabled { opacity: 0.32; cursor: default; }
-  .btn:focus-visible { outline: 2px solid var(--cork); outline-offset: 2px; }
-  .btn svg { width: 1rem; height: 1rem; flex: none; }
-  .bar .left { justify-self: start; }
-  .bar .right { justify-self: end; }
+  .btn:active {
+    background: #172926;
+  }
+  .btn:disabled {
+    opacity: 0.32;
+    cursor: default;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--cork);
+    outline-offset: 2px;
+  }
+  .btn svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+  }
+  .bar .left {
+    justify-self: start;
+  }
+  .bar .right {
+    justify-self: end;
+  }
 
   .mic {
-    --sig: rgba(238,242,238,0.22);
+    --sig: rgba(238, 242, 238, 0.22);
     position: relative;
     display: grid;
     place-items: center;
@@ -306,20 +428,34 @@
     box-shadow: inset 0 0 0 1.5px var(--sig);
     color: var(--ink-dim);
     cursor: pointer;
-    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease,
-                transform 160ms cubic-bezier(.2,1.4,.4,1);
+    transition:
+      background 160ms ease,
+      color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms cubic-bezier(0.2, 1.4, 0.4, 1);
   }
-  .mic svg { width: 1.5rem; height: 1.5rem; }
-  .mic:focus-visible { outline: 2px solid var(--cork); outline-offset: 3px; }
+  .mic svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .mic:focus-visible {
+    outline: 2px solid var(--cork);
+    outline-offset: 3px;
+  }
 
   /* waiting on the browser to open the audio stream */
-  .mic.starting { --sig: var(--pending); }
+  .mic.starting {
+    --sig: var(--pending);
+  }
   /* the mic is genuinely capturing */
-  .mic.live, .mic.hearing { --sig: var(--live); }
+  .mic.live,
+  .mic.hearing {
+    --sig: var(--live);
+  }
 
   .mic.on {
     background: var(--sig);
-    color: #06180F;
+    color: #06180f;
     box-shadow: inset 0 0 0 1.5px var(--sig);
   }
   .mic.on::after {
@@ -331,21 +467,33 @@
     animation: ring 1.9s ease-out infinite;
   }
   /* sound is arriving right now */
-  .mic.hearing { transform: scale(1.07); }
-  .mic.hearing::after { animation-duration: 0.85s; }
+  .mic.hearing {
+    transform: scale(1.07);
+  }
+  .mic.hearing::after {
+    animation-duration: 0.85s;
+  }
 
   @keyframes ring {
-    0%   { transform: scale(0.86); opacity: 0.9; }
-    100% { transform: scale(1.32); opacity: 0; }
+    0% {
+      transform: scale(0.86);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1.32);
+      opacity: 0;
+    }
   }
-  .mic.dead { opacity: 0.34; }
+  .mic.dead {
+    opacity: 0.34;
+  }
 
   /* live input meter, used by the mic test in Setup */
   .meter {
     height: 0.5rem;
     margin-top: 0.5rem;
     border-radius: 999px;
-    background: rgba(238,242,238,0.10);
+    background: rgba(238, 242, 238, 0.1);
     overflow: hidden;
   }
   .meter i {
@@ -353,7 +501,7 @@
     width: 0%;
     height: 100%;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--live), #8FE3B6);
+    background: linear-gradient(90deg, var(--live), #8fe3b6);
     transition: width 70ms linear;
   }
 
@@ -367,63 +515,96 @@
     pointer-events: none;
     transition: opacity 200ms ease;
   }
-  .scrim.on { opacity: 1; pointer-events: auto; }
+  .scrim.on {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
   .sheet {
     position: fixed;
     z-index: 9;
-    left: 0; right: 0; bottom: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     max-height: 86dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 1.25rem 1.25rem calc(1.5rem + var(--pad-b));
     border-radius: 1.25rem 1.25rem 0 0;
     background: var(--surround-lift);
-    box-shadow: 0 -1px 0 rgba(238,242,238,0.14), 0 -24px 60px rgba(0,0,0,0.5);
+    box-shadow:
+      0 -1px 0 rgba(238, 242, 238, 0.14),
+      0 -24px 60px rgba(0, 0, 0, 0.5);
     transform: translateY(101%);
-    transition: transform 260ms cubic-bezier(.32,.72,0,1);
+    transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
   }
-  .sheet.on { transform: translateY(0); }
+  .sheet.on {
+    transform: translateY(0);
+  }
   .sheet .grip {
-    width: 2.25rem; height: 0.25rem;
+    width: 2.25rem;
+    height: 0.25rem;
     margin: -0.375rem auto 1.125rem;
     border-radius: 999px;
-    background: rgba(238,242,238,0.22);
+    background: rgba(238, 242, 238, 0.22);
   }
 
-  .field { display: grid; gap: 0.5rem; margin-bottom: 1.375rem; }
-  .field > label, .lbl {
+  .field {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 1.375rem;
+  }
+  .field > label,
+  .lbl {
     font-size: 0.625rem;
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--ink-faint);
   }
-  .names { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+  .names {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem;
+  }
   .names input {
     width: 100%;
     padding: 0.6875rem 0.75rem;
     border: 0;
     border-radius: 0.625rem;
-    background: rgba(238,242,238,0.07);
-    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.14);
+    background: rgba(238, 242, 238, 0.07);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.14);
     color: var(--ink);
     font-family: var(--f-ui);
     font-size: 1rem;
     letter-spacing: 0.02em;
   }
-  .names input:focus { outline: 2px solid var(--cork); outline-offset: 1px; }
-  .names .a { box-shadow: inset 0 0 0 1px rgba(238,242,238,0.14), inset 3px 0 0 var(--court-a-lift); }
-  .names .b { box-shadow: inset 0 0 0 1px rgba(238,242,238,0.14), inset 3px 0 0 var(--court-b-lift); }
+  .names input:focus {
+    outline: 2px solid var(--cork);
+    outline-offset: 1px;
+  }
+  .names .a {
+    box-shadow:
+      inset 0 0 0 1px rgba(238, 242, 238, 0.14),
+      inset 3px 0 0 var(--court-a-lift);
+  }
+  .names .b {
+    box-shadow:
+      inset 0 0 0 1px rgba(238, 242, 238, 0.14),
+      inset 3px 0 0 var(--court-b-lift);
+  }
 
-  .seg { display: flex; gap: 0.375rem; }
+  .seg {
+    display: flex;
+    gap: 0.375rem;
+  }
   .seg button {
     flex: 1;
     padding: 0.625rem 0.25rem;
     border: 0;
     border-radius: 0.5rem;
-    background: rgba(238,242,238,0.06);
-    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.12);
+    background: rgba(238, 242, 238, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.12);
     color: var(--ink-dim);
     font-family: var(--f-ui);
     font-size: 0.8125rem;
@@ -434,9 +615,12 @@
   .seg button[aria-pressed="true"] {
     background: var(--line);
     box-shadow: none;
-    color: #0B1513;
+    color: #0b1513;
   }
-  .seg button:focus-visible { outline: 2px solid var(--cork); outline-offset: 2px; }
+  .seg button:focus-visible {
+    outline: 2px solid var(--cork);
+    outline-offset: 2px;
+  }
 
   .row {
     display: flex;
@@ -444,34 +628,54 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem 0;
-    border-top: 1px solid rgba(238,242,238,0.10);
+    border-top: 1px solid rgba(238, 242, 238, 0.1);
   }
-  .row .txt { display: grid; gap: 0.1875rem; }
-  .row .txt strong { font-size: 0.9375rem; font-weight: 600; letter-spacing: 0.01em; }
-  .row .txt span { font-size: 0.75rem; color: var(--ink-faint); letter-spacing: 0.01em; }
+  .row .txt {
+    display: grid;
+    gap: 0.1875rem;
+  }
+  .row .txt strong {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .row .txt span {
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.01em;
+  }
 
   .sw {
     flex: none;
-    width: 3.125rem; height: 1.875rem;
+    width: 3.125rem;
+    height: 1.875rem;
     padding: 0;
     border: 0;
     border-radius: 999px;
-    background: rgba(238,242,238,0.16);
+    background: rgba(238, 242, 238, 0.16);
     cursor: pointer;
     transition: background 180ms ease;
   }
   .sw::after {
     content: "";
     display: block;
-    width: 1.5rem; height: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
     margin-left: 0.1875rem;
     border-radius: 50%;
     background: var(--line);
-    transition: transform 180ms cubic-bezier(.32,.72,0,1);
+    transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
   }
-  .sw[aria-pressed="true"] { background: var(--cork); }
-  .sw[aria-pressed="true"]::after { transform: translateX(1.25rem); }
-  .sw:focus-visible { outline: 2px solid var(--cork); outline-offset: 2px; }
+  .sw[aria-pressed="true"] {
+    background: var(--cork);
+  }
+  .sw[aria-pressed="true"]::after {
+    transform: translateX(1.25rem);
+  }
+  .sw:focus-visible {
+    outline: 2px solid var(--cork);
+    outline-offset: 2px;
+  }
 
   .vstat {
     display: flex;
@@ -479,22 +683,29 @@
     gap: 0.5625rem;
     padding: 0.6875rem 0.75rem;
     border-radius: 0.625rem;
-    background: rgba(238,242,238,0.06);
-    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.12);
+    background: rgba(238, 242, 238, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.12);
     font-size: 0.8125rem;
     line-height: 1.45;
     color: var(--ink-dim);
   }
   .vstat b {
     flex: none;
-    width: 0.5rem; height: 0.5rem;
+    width: 0.5rem;
+    height: 0.5rem;
     margin-top: 0.34rem;
     border-radius: 50%;
     background: var(--ink-faint);
   }
-  .vstat.ok b   { background: #4ED08A; }
-  .vstat.warn b { background: #F5C77E; }
-  .vstat.bad b  { background: #F2A0A0; }
+  .vstat.ok b {
+    background: #4ed08a;
+  }
+  .vstat.warn b {
+    background: #f5c77e;
+  }
+  .vstat.bad b {
+    background: #f2a0a0;
+  }
 
   .cmds {
     margin: 0.25rem 0 1.375rem;
@@ -503,14 +714,18 @@
     font-size: 0.8125rem;
     color: var(--ink-dim);
   }
-  .cmds div { display: flex; gap: 0.625rem; align-items: baseline; }
+  .cmds div {
+    display: flex;
+    gap: 0.625rem;
+    align-items: baseline;
+  }
   .cmds kbd {
     flex: none;
     min-width: 7.25rem;
     padding: 0.1875rem 0.4375rem;
     border-radius: 0.3125rem;
-    background: rgba(238,242,238,0.08);
-    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.12);
+    background: rgba(238, 242, 238, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.12);
     font-family: var(--f-ui);
     font-size: 0.75rem;
     font-weight: 600;
@@ -518,11 +733,124 @@
     color: var(--ink);
   }
 
-  .wide { width: 100%; height: 3rem; }
-  .danger { color: #F2A0A0; box-shadow: inset 0 0 0 1px rgba(242,160,160,0.32); }
+  /* ---------- first-run instructions ---------- */
+  .intro {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    padding: calc(var(--pad-t) + 1.25rem) 1.25rem calc(var(--pad-b) + 1.25rem);
+    overflow-y: auto;
+    background:
+      radial-gradient(
+        120% 80% at 0% 0%,
+        rgba(22, 104, 190, 0.3),
+        transparent 60%
+      ),
+      radial-gradient(
+        120% 80% at 100% 100%,
+        rgba(23, 168, 95, 0.28),
+        transparent 60%
+      ),
+      var(--surround);
+  }
+  .intro[hidden] {
+    display: none;
+  }
+
+  .introBox {
+    width: min(30rem, 100%);
+  }
+
+  .introTitle {
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: clamp(2.75rem, 13vw, 4.5rem);
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+    color: var(--line);
+  }
+  .introSub {
+    margin: 0.5rem 0 2rem;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+    color: var(--ink-dim);
+  }
+
+  .steps {
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+  .steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+  }
+  .steps .n {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    font-family: var(--f-display);
+    font-size: 1.125rem;
+    color: #06180f;
+  }
+  .steps li:nth-child(1) .n {
+    background: var(--court-a-lift);
+    color: #f2f7ff;
+  }
+  .steps li:nth-child(2) .n {
+    background: var(--court-b-lift);
+    color: #f0fff6;
+  }
+  .steps li:nth-child(3) .n {
+    background: var(--cork);
+  }
+  .steps div {
+    display: grid;
+    gap: 0.25rem;
+  }
+  .steps strong {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .steps span {
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+
+  .introNote {
+    margin: 0 0 1.5rem;
+    padding: 0.75rem 0.875rem;
+    border-radius: 0.625rem;
+    background: rgba(238, 242, 238, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.12);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+
+  .wide {
+    width: 100%;
+    height: 3rem;
+  }
+  .danger {
+    color: #f2a0a0;
+    box-shadow: inset 0 0 0 1px rgba(242, 160, 160, 0.32);
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.001ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
@@ -531,7 +859,9 @@
 
   /* wider screens: cap the numerals so they stay a scoreboard, not wallpaper */
   @media (min-width: 60rem) {
-    .score { font-size: min(30vh, 16vw); }
+    .score {
+      font-size: min(30vh, 16vw);
+    }
   }
 </style>
 
@@ -539,15 +869,31 @@
   <div class="court">
     <button class="side side--a" id="sideA" aria-label="Add a point for Team A">
       <span class="lines" aria-hidden="true">
-        <i class="box"></i><i class="short"></i><i class="centre"></i><i class="long"></i>
+        <i class="box"></i><i class="short"></i><i class="centre"></i
+        ><i class="long"></i>
       </span>
       <span class="team" id="nameA">Team A</span>
       <span class="score" id="scoreA">0</span>
       <span class="foot">
-        <svg class="shuttle" id="servA" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M6 3h12l-2.4 11.5H8.4L6 3Z" fill="currentColor" opacity=".55"/>
-          <path d="M10.2 3 9.4 14.5M13.8 3l.8 11.5" stroke="#08110F" stroke-width="1.1" opacity=".5"/>
-          <circle cx="12" cy="18" r="3.6" fill="currentColor"/>
+        <svg
+          class="shuttle"
+          id="servA"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M6 3h12l-2.4 11.5H8.4L6 3Z"
+            fill="currentColor"
+            opacity=".55"
+          />
+          <path
+            d="M10.2 3 9.4 14.5M13.8 3l.8 11.5"
+            stroke="#08110F"
+            stroke-width="1.1"
+            opacity=".5"
+          />
+          <circle cx="12" cy="18" r="3.6" fill="currentColor" />
         </svg>
         <span class="pips" id="pipsA"></span>
       </span>
@@ -555,28 +901,48 @@
 
     <button class="side side--b" id="sideB" aria-label="Add a point for Team B">
       <span class="lines" aria-hidden="true">
-        <i class="box"></i><i class="short"></i><i class="centre"></i><i class="long"></i>
+        <i class="box"></i><i class="short"></i><i class="centre"></i
+        ><i class="long"></i>
       </span>
       <span class="team" id="nameB">Team B</span>
       <span class="score" id="scoreB">0</span>
       <span class="foot">
-        <svg class="shuttle" id="servB" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M6 3h12l-2.4 11.5H8.4L6 3Z" fill="currentColor" opacity=".55"/>
-          <path d="M10.2 3 9.4 14.5M13.8 3l.8 11.5" stroke="#08110F" stroke-width="1.1" opacity=".5"/>
-          <circle cx="12" cy="18" r="3.6" fill="currentColor"/>
+        <svg
+          class="shuttle"
+          id="servB"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M6 3h12l-2.4 11.5H8.4L6 3Z"
+            fill="currentColor"
+            opacity=".55"
+          />
+          <path
+            d="M10.2 3 9.4 14.5M13.8 3l.8 11.5"
+            stroke="#08110F"
+            stroke-width="1.1"
+            opacity=".5"
+          />
+          <circle cx="12" cy="18" r="3.6" fill="currentColor" />
         </svg>
         <span class="pips" id="pipsB"></span>
       </span>
     </button>
 
     <div class="net" aria-hidden="true"></div>
-    <div class="status" id="status" role="status" aria-live="polite">Game 1</div>
+    <div class="status" id="status" role="status" aria-live="polite">
+      Game 1
+    </div>
 
     <div class="over" id="over">
       <div class="kind" id="overKind">Game</div>
       <div class="who" id="overWho">Team A</div>
       <div class="tally" id="overTally">21 – 18</div>
-      <button class="btn" id="overNext" style="height:3rem;padding:0 1.5rem">Next game</button>
+      <button class="btn" id="overNext" style="height: 3rem; padding: 0 1.5rem">
+        Next game
+      </button>
     </div>
   </div>
 
@@ -584,58 +950,163 @@
     <div class="heard" id="heard"></div>
 
     <button class="btn left" id="undo" disabled aria-label="Undo last point">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 8h12a5 5 0 0 1 0 10H9"/><path d="m7 4-4 4 4 4"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 8h12a5 5 0 0 1 0 10H9" />
+        <path d="m7 4-4 4 4 4" />
       </svg>
       Undo
     </button>
 
-    <button class="mic" id="mic" aria-pressed="false" aria-label="Start listening">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="9" y="2" width="6" height="11" rx="3"/>
-        <path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/>
+    <button
+      class="mic"
+      id="mic"
+      aria-pressed="false"
+      aria-label="Start listening"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="9" y="2" width="6" height="11" rx="3" />
+        <path d="M5 11a7 7 0 0 0 14 0" />
+        <path d="M12 18v4" />
       </svg>
     </button>
 
     <button class="btn right" id="menu" aria-label="Open settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-        <path d="M4 7h16M4 12h16M4 17h16"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M4 7h16M4 12h16M4 17h16" />
       </svg>
       Setup
     </button>
   </div>
 </div>
 
+<div class="intro" id="intro" hidden>
+  <div class="introBox">
+    <h1 class="introTitle">Mac Badminton Rally Caller</h1>
+    <p class="introSub">Keep the badminton score with your voice.</p>
+
+    <ol class="steps">
+      <li>
+        <span class="n">1</span>
+        <div>
+          <strong>Tap the mic</strong
+          ><span
+            >Allow the microphone when your phone asks. It turns green when
+            it&rsquo;s listening.</span
+          >
+        </div>
+      </li>
+      <li>
+        <span class="n">2</span>
+        <div>
+          <strong>Call the point</strong
+          ><span id="introCall"
+            >Say &ldquo;Team A&rdquo; or &ldquo;Team B&rdquo; every time someone
+            scores.</span
+          >
+        </div>
+      </li>
+      <li>
+        <span class="n">3</span>
+        <div>
+          <strong>Use your own names</strong
+          ><span
+            >Tap Setup and type the names, like Bob and Kate. Their names work
+            too &mdash; but &ldquo;Team A&rdquo; and &ldquo;Team B&rdquo; always
+            score.</span
+          >
+        </div>
+      </li>
+    </ol>
+
+    <p class="introNote">
+      Too noisy for the mic? Tap either side of the screen to score. Say
+      &ldquo;undo&rdquo; to take a point back.
+    </p>
+
+    <button class="btn wide" id="introGo">Continue</button>
+  </div>
+</div>
+
 <div class="scrim" id="scrim"></div>
 
-<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Match setup">
+<div
+  class="sheet"
+  id="sheet"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Match setup"
+>
   <div class="grip"></div>
 
   <div class="field">
     <span class="lbl">Team names</span>
     <div class="names">
-      <input class="a" id="inA" value="Team A" maxlength="14" autocomplete="off" spellcheck="false" aria-label="Team A name">
-      <input class="b" id="inB" value="Team B" maxlength="14" autocomplete="off" spellcheck="false" aria-label="Team B name">
+      <input
+        class="a"
+        id="inA"
+        value="Team A"
+        maxlength="14"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Team A name"
+      />
+      <input
+        class="b"
+        id="inB"
+        value="Team B"
+        maxlength="14"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Team B name"
+      />
     </div>
   </div>
 
   <div class="field">
     <span class="lbl">Points per game</span>
     <div class="seg" id="segTarget">
-      <button data-v="11">11</button><button data-v="15">15</button><button data-v="21">21</button>
+      <button data-v="11">11</button><button data-v="15">15</button
+      ><button data-v="21">21</button>
     </div>
   </div>
 
   <div class="field">
     <span class="lbl">Match length</span>
     <div class="seg" id="segBest">
-      <button data-v="1">Single game</button><button data-v="3">Best of 3</button><button data-v="5">Best of 5</button>
+      <button data-v="1">Single game</button
+      ><button data-v="3">Best of 3</button
+      ><button data-v="5">Best of 5</button>
     </div>
   </div>
 
   <div class="field">
     <span class="lbl">Voice</span>
-    <div class="vstat" id="vstat"><b id="vdot"></b><span id="vtext">Checking…</span></div>
+    <div class="vstat" id="vstat">
+      <b id="vdot"></b><span id="vtext">Checking…</span>
+    </div>
     <button class="btn wide" id="ownTab" hidden>Open in its own tab</button>
     <button class="btn wide" id="micTest">Test the microphone</button>
     <div class="meter" id="meter" hidden><i id="meterFill"></i></div>
@@ -643,969 +1114,1432 @@
 
   <span class="lbl">Voice commands</span>
   <div class="cmds">
-    <div><kbd id="cmdKa">“Team A”</kbd><span id="cmdDa">Point to the blue side — also “A”, “point A”, “alpha”</span></div>
-    <div><kbd id="cmdKb">“Team B”</kbd><span id="cmdDb">Point to the green side — also “B”, “point B”, “bravo”</span></div>
-    <div><kbd>“Undo”</kbd><span>Take back the last point — also “oops”</span></div>
-    <div><kbd>“Next game”</kbd><span>Start the next game once one is won</span></div>
-    <div><kbd>“Reset game”</kbd><span>Put the current game back to 0 – 0</span></div>
+    <div>
+      <kbd id="cmdKa">“Team A”</kbd
+      ><span id="cmdDa"
+        >Point to the blue side — also “A”, “point A”, “alpha”</span
+      >
+    </div>
+    <div>
+      <kbd id="cmdKb">“Team B”</kbd
+      ><span id="cmdDb"
+        >Point to the green side — also “B”, “point B”, “bravo”</span
+      >
+    </div>
+    <div>
+      <kbd>“Undo”</kbd><span>Take back the last point — also “oops”</span>
+    </div>
+    <div>
+      <kbd>“Next game”</kbd><span>Start the next game once one is won</span>
+    </div>
+    <div>
+      <kbd>“Reset game”</kbd><span>Put the current game back to 0 – 0</span>
+    </div>
   </div>
 
   <div class="row">
-    <span class="txt"><strong>Say the score aloud</strong><span>Reads the running score after each point</span></span>
-    <button class="sw" id="swSpeak" aria-pressed="false" aria-label="Say the score aloud"></button>
+    <span class="txt"
+      ><strong>Say the score aloud</strong
+      ><span>Reads the running score after each point</span></span
+    >
+    <button
+      class="sw"
+      id="swSpeak"
+      aria-pressed="false"
+      aria-label="Say the score aloud"
+    ></button>
   </div>
   <div class="row">
-    <span class="txt"><strong>Point beep</strong><span>A short tone confirms who scored</span></span>
-    <button class="sw" id="swBeep" aria-pressed="true" aria-label="Point beep"></button>
+    <span class="txt"
+      ><strong>Point beep</strong
+      ><span>A short tone confirms who scored</span></span
+    >
+    <button
+      class="sw"
+      id="swBeep"
+      aria-pressed="true"
+      aria-label="Point beep"
+    ></button>
   </div>
-  <div class="row" style="margin-bottom:1.25rem">
-    <span class="txt"><strong>Keep the screen on</strong><span>Stops the phone sleeping mid-rally</span></span>
-    <button class="sw" id="swWake" aria-pressed="true" aria-label="Keep the screen on"></button>
+  <div class="row" style="margin-bottom: 1.25rem">
+    <span class="txt"
+      ><strong>Keep the screen on</strong
+      ><span>Stops the phone sleeping mid-rally</span></span
+    >
+    <button
+      class="sw"
+      id="swWake"
+      aria-pressed="true"
+      aria-label="Keep the screen on"
+    ></button>
   </div>
 
-  <button class="btn wide danger" id="newMatch" style="margin-bottom:0.625rem">Start a new match</button>
+  <button class="btn wide" id="showIntro" style="margin-bottom: 0.625rem">
+    How to use it
+  </button>
+  <button class="btn wide danger" id="newMatch" style="margin-bottom: 0.625rem">
+    Start a new match
+  </button>
   <button class="btn wide" id="closeSheet">Done</button>
 </div>
 
 <script>
-(function () {
-  "use strict";
+  (function () {
+    "use strict";
 
-  /* ---------- viewport: the artifact host owns <head>, so make sure the
+    /* ---------- viewport: the artifact host owns <head>, so make sure the
      phone gets a device-width viewport and safe-area insets ---------- */
-  var vp = document.querySelector('meta[name="viewport"]');
-  if (!vp) {
-    vp = document.createElement("meta");
-    vp.name = "viewport";
-    document.head.appendChild(vp);
-    vp.content = "width=device-width, initial-scale=1, viewport-fit=cover";
-  } else if (vp.content.indexOf("viewport-fit") === -1) {
-    vp.content = vp.content + ", viewport-fit=cover";
-  }
+    var vp = document.querySelector('meta[name="viewport"]');
+    if (!vp) {
+      vp = document.createElement("meta");
+      vp.name = "viewport";
+      document.head.appendChild(vp);
+      vp.content = "width=device-width, initial-scale=1, viewport-fit=cover";
+    } else if (vp.content.indexOf("viewport-fit") === -1) {
+      vp.content = vp.content + ", viewport-fit=cover";
+    }
 
-  var $ = function (id) { return document.getElementById(id); };
+    var $ = function (id) {
+      return document.getElementById(id);
+    };
 
-  var CAPS = { 11: 15, 15: 21, 21: 30 };
-  var STORE = "rally-caller-v1";
+    var CAPS = { 11: 15, 15: 21, 21: 30 };
+    var STORE = "rally-caller-v1";
 
-  var S = {
-    a: 0, b: 0,
-    gamesA: 0, gamesB: 0,
-    game: 1,
-    server: null,      // 'a' | 'b' | null before the first point
-    won: null,         // team that just won a game
-    matchWon: null,    // team that won the match
-    names: { a: "Team A", b: "Team B" },
-    target: 21,
-    bestOf: 3,
-    speak: false,
-    beep: true,
-    wake: true
-  };
+    var S = {
+      a: 0,
+      b: 0,
+      gamesA: 0,
+      gamesB: 0,
+      game: 1,
+      server: null, // 'a' | 'b' | null before the first point
+      won: null, // team that just won a game
+      matchWon: null, // team that won the match
+      names: { a: "Team A", b: "Team B" },
+      target: 21,
+      bestOf: 3,
+      seen: false, // has the how-to page been dismissed?
+      speak: false,
+      beep: true,
+      wake: true,
+    };
 
-  var history = [];
-  var captionTimer = null;
+    var history = [];
+    var captionTimer = null;
 
-  /* ---------- persistence ---------- */
-  function save() {
-    try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {}
-  }
-  function load() {
-    try {
-      var raw = localStorage.getItem(STORE);
-      if (!raw) return;
-      var v = JSON.parse(raw);
-      if (v && typeof v === "object") {
-        Object.keys(S).forEach(function (k) {
-          if (v[k] !== undefined && v[k] !== null) S[k] = v[k];
-        });
-        if (!S.names || !S.names.a) S.names = { a: "Team A", b: "Team B" };
+    /* ---------- persistence ---------- */
+    function save() {
+      try {
+        localStorage.setItem(STORE, JSON.stringify(S));
+      } catch (e) {}
+    }
+    function load() {
+      try {
+        var raw = localStorage.getItem(STORE);
+        if (!raw) return;
+        var v = JSON.parse(raw);
+        if (v && typeof v === "object") {
+          Object.keys(S).forEach(function (k) {
+            if (v[k] !== undefined && v[k] !== null) S[k] = v[k];
+          });
+          if (!S.names || !S.names.a) S.names = { a: "Team A", b: "Team B" };
+        }
+      } catch (e) {}
+    }
+
+    /* ---------- rules ---------- */
+    function cap() {
+      return CAPS[S.target] || S.target + 9;
+    }
+    function needed() {
+      return Math.ceil(S.bestOf / 2);
+    }
+    function isWin(mine, theirs) {
+      return (mine >= S.target && mine - theirs >= 2) || mine >= cap();
+    }
+
+    function point(team) {
+      if (S.won || S.matchWon) return;
+      pushHistory();
+
+      S[team] += 1;
+      S.server = team;
+
+      var mine = S[team];
+      var theirs = S[team === "a" ? "b" : "a"];
+
+      if (isWin(mine, theirs)) {
+        S.won = team;
+        if (team === "a") S.gamesA += 1;
+        else S.gamesB += 1;
+        var g = team === "a" ? S.gamesA : S.gamesB;
+        if (g >= needed()) S.matchWon = team;
       }
-    } catch (e) {}
-  }
 
-  /* ---------- rules ---------- */
-  function cap() { return CAPS[S.target] || S.target + 9; }
-  function needed() { return Math.ceil(S.bestOf / 2); }
-  function isWin(mine, theirs) {
-    return (mine >= S.target && mine - theirs >= 2) || mine >= cap();
-  }
-
-  function point(team) {
-    if (S.won || S.matchWon) return;
-    pushHistory();
-
-    S[team] += 1;
-    S.server = team;
-
-    var mine = S[team];
-    var theirs = S[team === "a" ? "b" : "a"];
-
-    if (isWin(mine, theirs)) {
-      S.won = team;
-      if (team === "a") S.gamesA += 1; else S.gamesB += 1;
-      var g = team === "a" ? S.gamesA : S.gamesB;
-      if (g >= needed()) S.matchWon = team;
+      render();
+      beep(team);
+      if (S.won) announceGame(team);
+      else announceScore(team);
+      save();
     }
 
-    render();
-    beep(team);
-    if (S.won) announceGame(team); else announceScore(team);
-    save();
-  }
+    function nextGame() {
+      if (!S.won || S.matchWon) return;
+      pushHistory();
+      S.server = S.won;
+      S.a = 0;
+      S.b = 0;
+      S.game += 1;
+      S.won = null;
+      render();
+      save();
+    }
 
-  function nextGame() {
-    if (!S.won || S.matchWon) return;
-    pushHistory();
-    S.server = S.won;
-    S.a = 0; S.b = 0;
-    S.game += 1;
-    S.won = null;
-    render();
-    save();
-  }
+    function resetGame() {
+      pushHistory();
+      S.a = 0;
+      S.b = 0;
+      S.won = null;
+      S.matchWon = null;
+      render();
+      save();
+    }
 
-  function resetGame() {
-    pushHistory();
-    S.a = 0; S.b = 0; S.won = null; S.matchWon = null;
-    render();
-    save();
-  }
+    function newMatch() {
+      pushHistory();
+      S.a = 0;
+      S.b = 0;
+      S.gamesA = 0;
+      S.gamesB = 0;
+      S.game = 1;
+      S.server = null;
+      S.won = null;
+      S.matchWon = null;
+      render();
+      save();
+    }
 
-  function newMatch() {
-    pushHistory();
-    S.a = 0; S.b = 0; S.gamesA = 0; S.gamesB = 0;
-    S.game = 1; S.server = null; S.won = null; S.matchWon = null;
-    render();
-    save();
-  }
+    function pushHistory() {
+      history.push(
+        JSON.stringify({
+          a: S.a,
+          b: S.b,
+          gamesA: S.gamesA,
+          gamesB: S.gamesB,
+          game: S.game,
+          server: S.server,
+          won: S.won,
+          matchWon: S.matchWon,
+        }),
+      );
+      if (history.length > 120) history.shift();
+    }
 
-  function pushHistory() {
-    history.push(JSON.stringify({
-      a: S.a, b: S.b, gamesA: S.gamesA, gamesB: S.gamesB,
-      game: S.game, server: S.server, won: S.won, matchWon: S.matchWon
-    }));
-    if (history.length > 120) history.shift();
-  }
+    function undo() {
+      var prev = history.pop();
+      if (!prev) return;
+      var v = JSON.parse(prev);
+      Object.keys(v).forEach(function (k) {
+        S[k] = v[k];
+      });
+      render();
+      save();
+    }
 
-  function undo() {
-    var prev = history.pop();
-    if (!prev) return;
-    var v = JSON.parse(prev);
-    Object.keys(v).forEach(function (k) { S[k] = v[k]; });
-    render();
-    save();
-  }
+    /* ---------- sound ---------- */
+    var audio = null;
+    function unlockAudio() {
+      try {
+        if (!audio) {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) audio = new Ctx();
+        }
+        if (audio && audio.state === "suspended") audio.resume();
+      } catch (e) {}
+    }
+    function beep(team) {
+      if (!S.beep) return;
+      unlockAudio();
+      if (!audio) return;
+      try {
+        var t = audio.currentTime;
+        var osc = audio.createOscillator();
+        var gain = audio.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(team === "a" ? 523.25 : 784.0, t);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+        osc.connect(gain).connect(audio.destination);
+        osc.start(t);
+        osc.stop(t + 0.18);
+      } catch (e) {}
+    }
 
-  /* ---------- sound ---------- */
-  var audio = null;
-  function unlockAudio() {
-    try {
-      if (!audio) {
-        var Ctx = window.AudioContext || window.webkitAudioContext;
-        if (Ctx) audio = new Ctx();
+    /* ---------- speech out ---------- */
+    var speakGuardUntil = 0;
+    function say(text) {
+      if (!S.speak || !window.speechSynthesis) return;
+      try {
+        speakGuardUntil = Date.now() + 6000; // hard ceiling in case onend never fires
+        var u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.05;
+        u.volume = 1;
+        u.onend = u.onerror = function () {
+          speakGuardUntil = Date.now() + 450;
+        };
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        speakGuardUntil = 0;
       }
-      if (audio && audio.state === "suspended") audio.resume();
-    } catch (e) {}
-  }
-  function beep(team) {
-    if (!S.beep) return;
-    unlockAudio();
-    if (!audio) return;
-    try {
-      var t = audio.currentTime;
-      var osc = audio.createOscillator();
-      var gain = audio.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(team === "a" ? 523.25 : 784.0, t);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-      osc.connect(gain).connect(audio.destination);
-      osc.start(t);
-      osc.stop(t + 0.18);
-    } catch (e) {}
-  }
-
-  /* ---------- speech out ---------- */
-  var speakGuardUntil = 0;
-  function say(text) {
-    if (!S.speak || !window.speechSynthesis) return;
-    try {
-      speakGuardUntil = Date.now() + 6000;   // hard ceiling in case onend never fires
-      var u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.05;
-      u.volume = 1;
-      u.onend = u.onerror = function () { speakGuardUntil = Date.now() + 450; };
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    } catch (e) { speakGuardUntil = 0; }
-  }
-  function announceScore(team) {
-    // badminton convention: the serving side's score is called first
-    var mine = S[team], theirs = S[team === "a" ? "b" : "a"];
-    say(mine === theirs ? mine + " all" : mine + " " + theirs);
-  }
-  function announceGame(team) {
-    say((S.matchWon ? "Match. " : "Game. ") + S.names[team]);
-  }
-
-  /* ---------- render ---------- */
-  var lastA = 0, lastB = 0;
-
-  function pipsHtml(won) {
-    if (S.bestOf < 2) return "";
-    var out = "";
-    for (var i = 0; i < needed(); i++) out += '<b class="' + (i < won ? "won" : "") + '"></b>';
-    return out;
-  }
-
-  function statusText() {
-    if (S.matchWon) return "Match &middot; " + esc(S.names[S.matchWon].toUpperCase());
-    if (S.won) return "Game " + S.game + " &middot; " + esc(S.names[S.won].toUpperCase());
-
-    var c = cap();
-    if (S.a === c - 1 && S.b === c - 1) return '<span class="hot">Sudden death</span>';
-
-    var aPt = isWin(S.a + 1, S.b);
-    var bPt = isWin(S.b + 1, S.a);
-    if (aPt || bPt) {
-      var who = aPt ? "a" : "b";
-      var g = who === "a" ? S.gamesA : S.gamesB;
-      var kind = (g + 1 >= needed()) ? "Match point" : "Game point";
-      return '<span class="hot">' + kind + " &middot; " + esc(S.names[who].toUpperCase()) + "</span>";
+    }
+    function announceScore(team) {
+      // badminton convention: the serving side's score is called first
+      var mine = S[team],
+        theirs = S[team === "a" ? "b" : "a"];
+      say(mine === theirs ? mine + " all" : mine + " " + theirs);
+    }
+    function announceGame(team) {
+      say((S.matchWon ? "Match. " : "Game. ") + S.names[team]);
     }
 
-    if (S.a >= S.target - 1 && S.a === S.b) return '<span class="hot">Deuce</span>';
-    return S.bestOf > 1 ? "Game " + S.game : "Rally Caller";
-  }
+    /* ---------- render ---------- */
+    var lastA = 0,
+      lastB = 0;
 
-  function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
-      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c];
-    });
-  }
-
-  function render() {
-    setName("nameA", S.names.a);
-    setName("nameB", S.names.b);
-    $("sideA").setAttribute("aria-label", "Add a point for " + S.names.a);
-    $("sideB").setAttribute("aria-label", "Add a point for " + S.names.b);
-    updateCmdHelp();
-
-    if (S.a !== lastA) pop($("scoreA"));
-    if (S.b !== lastB) pop($("scoreB"));
-    lastA = S.a; lastB = S.b;
-
-    $("scoreA").textContent = S.a;
-    $("scoreB").textContent = S.b;
-
-    $("servA").classList.toggle("on", S.server === "a" && !S.won);
-    $("servB").classList.toggle("on", S.server === "b" && !S.won);
-
-    $("pipsA").innerHTML = pipsHtml(S.gamesA);
-    $("pipsB").innerHTML = pipsHtml(S.gamesB);
-    $("status").innerHTML = statusText();
-
-    var over = $("over");
-    if (S.won || S.matchWon) {
-      var w = S.matchWon || S.won;
-      $("overKind").textContent = S.matchWon ? "Match" : "Game " + S.game;
-      $("overWho").textContent = S.names[w];
-      $("overTally").textContent = S.matchWon
-        ? S.gamesA + " – " + S.gamesB + " in games"
-        : S.a + " – " + S.b;
-      $("overNext").textContent = S.matchWon ? "New match" : "Next game";
-      over.classList.add("on");
-    } else {
-      over.classList.remove("on");
+    function pipsHtml(won) {
+      if (S.bestOf < 2) return "";
+      var out = "";
+      for (var i = 0; i < needed(); i++)
+        out += '<b class="' + (i < won ? "won" : "") + '"></b>';
+      return out;
     }
 
-    $("undo").disabled = history.length === 0;
+    function statusText() {
+      if (S.matchWon)
+        return "Match &middot; " + esc(S.names[S.matchWon].toUpperCase());
+      if (S.won)
+        return (
+          "Game " + S.game + " &middot; " + esc(S.names[S.won].toUpperCase())
+        );
 
-    $("inA").value = S.names.a;
-    $("inB").value = S.names.b;
-    seg($("segTarget"), S.target);
-    seg($("segBest"), S.bestOf);
-    $("swSpeak").setAttribute("aria-pressed", String(S.speak));
-    $("swBeep").setAttribute("aria-pressed", String(S.beep));
-    $("swWake").setAttribute("aria-pressed", String(S.wake));
-  }
+      var c = cap();
+      if (S.a === c - 1 && S.b === c - 1)
+        return '<span class="hot">Sudden death</span>';
 
-  function setName(id, text) {
-    $(id).textContent = text;
-    fitName(id);
-  }
+      var aPt = isWin(S.a + 1, S.b);
+      var bPt = isWin(S.b + 1, S.a);
+      if (aPt || bPt) {
+        var who = aPt ? "a" : "b";
+        var g = who === "a" ? S.gamesA : S.gamesB;
+        var kind = g + 1 >= needed() ? "Match point" : "Game point";
+        return (
+          '<span class="hot">' +
+          kind +
+          " &middot; " +
+          esc(S.names[who].toUpperCase()) +
+          "</span>"
+        );
+      }
 
-  /* Grow the name until it fills its half of the court. Measured rather than
+      if (S.a >= S.target - 1 && S.a === S.b)
+        return '<span class="hot">Deuce</span>';
+      return S.bestOf > 1 ? "Game " + S.game : "Mac Badminton Rally Caller";
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+      });
+    }
+
+    function render() {
+      setName("nameA", S.names.a);
+      setName("nameB", S.names.b);
+      $("sideA").setAttribute("aria-label", "Add a point for " + S.names.a);
+      $("sideB").setAttribute("aria-label", "Add a point for " + S.names.b);
+      updateCmdHelp();
+
+      if (S.a !== lastA) pop($("scoreA"));
+      if (S.b !== lastB) pop($("scoreB"));
+      lastA = S.a;
+      lastB = S.b;
+
+      $("scoreA").textContent = S.a;
+      $("scoreB").textContent = S.b;
+
+      $("servA").classList.toggle("on", S.server === "a" && !S.won);
+      $("servB").classList.toggle("on", S.server === "b" && !S.won);
+
+      $("pipsA").innerHTML = pipsHtml(S.gamesA);
+      $("pipsB").innerHTML = pipsHtml(S.gamesB);
+      $("status").innerHTML = statusText();
+
+      var over = $("over");
+      if (S.won || S.matchWon) {
+        var w = S.matchWon || S.won;
+        $("overKind").textContent = S.matchWon ? "Match" : "Game " + S.game;
+        $("overWho").textContent = S.names[w];
+        $("overTally").textContent = S.matchWon
+          ? S.gamesA + " – " + S.gamesB + " in games"
+          : S.a + " – " + S.b;
+        $("overNext").textContent = S.matchWon ? "New match" : "Next game";
+        over.classList.add("on");
+      } else {
+        over.classList.remove("on");
+      }
+
+      $("undo").disabled = history.length === 0;
+
+      $("inA").value = S.names.a;
+      $("inB").value = S.names.b;
+      seg($("segTarget"), S.target);
+      seg($("segBest"), S.bestOf);
+      $("swSpeak").setAttribute("aria-pressed", String(S.speak));
+      $("swBeep").setAttribute("aria-pressed", String(S.beep));
+      $("swWake").setAttribute("aria-pressed", String(S.wake));
+    }
+
+    function setName(id, text) {
+      $(id).textContent = text;
+      fitName(id);
+    }
+
+    /* Grow the name until it fills its half of the court. Measured rather than
      guessed, so a short name gets genuinely large and a long one still fits. */
-  function fitName(id) {
-    var el = $(id), side = el.parentElement;
-    var w = side.clientWidth, h = side.clientHeight;
-    if (!w || !h) return;
+    function fitName(id) {
+      var el = $(id),
+        side = el.parentElement;
+      var w = side.clientWidth,
+        h = side.clientHeight;
+      if (!w || !h) return;
 
-    var avail = w * 0.94;
-    var maxSize = Math.min(w * 0.34, h * 0.19, 128);   // stay below the score
-    var minSize = 15;
+      var avail = w * 0.94;
+      var maxSize = Math.min(w * 0.34, h * 0.19, 128); // stay below the score
+      var minSize = 15;
 
-    var prevMax = el.style.maxWidth;
-    el.style.maxWidth = "none";
-    el.style.whiteSpace = "nowrap";
-    el.style.fontSize = "100px";
-    var natural = el.scrollWidth || 1;
+      var prevMax = el.style.maxWidth;
+      el.style.maxWidth = "none";
+      el.style.whiteSpace = "nowrap";
+      el.style.fontSize = "100px";
+      var natural = el.scrollWidth || 1;
 
-    var size = Math.floor(100 * avail / natural);
-    if (size > maxSize) size = Math.floor(maxSize);
-    if (size < minSize) { size = minSize; el.style.whiteSpace = "normal"; }
-
-    el.style.fontSize = size + "px";
-    el.style.maxWidth = prevMax || "";
-  }
-
-  function fitNames() { fitName("nameA"); fitName("nameB"); }
-  window.addEventListener("resize", fitNames);
-  window.addEventListener("orientationchange", function () { setTimeout(fitNames, 250); });
-
-  // What you actually say to score for a side, given its current name.
-  function callPhrase(k) {
-    return "Team " + (usesLetter(k) ? k.toUpperCase() : S.names[k]);
-  }
-
-  // The command list mirrors whatever the teams are actually called.
-  function updateCmdHelp() {
-    [["a", "cmdKa", "cmdDa", "blue"], ["b", "cmdKb", "cmdDb", "green"]].forEach(function (row) {
-      var k = row[0], toks = nameTokens(k), named = toks.length > 0;
-      var letter = k.toUpperCase();
-      $(row[1]).textContent = named ? "“Team " + S.names[k] + "”" : "“Team " + letter + "”";
-
-      if (!named) {
-        $(row[2]).textContent = "Point to the " + row[3] + " side — also “" + letter + "”, “point " +
-          letter + "”, “" + (k === "a" ? "alpha" : "bravo") + "”";
-        return;
+      var size = Math.floor((100 * avail) / natural);
+      if (size > maxSize) size = Math.floor(maxSize);
+      if (size < minSize) {
+        size = minSize;
+        el.style.whiteSpace = "normal";
       }
-      var ini = initials()[k];
-      var also = ["“" + S.names[k] + "”"];
-      if (ini) also.push("“Team " + ini.toUpperCase() + "”");
-      $(row[2]).textContent = "Point to the " + row[3] + " side — also " + also.join(", ");
-    });
-  }
 
-  function pop(el) {
-    el.classList.remove("pop");
-    void el.offsetWidth;
-    el.classList.add("pop");
-  }
-
-  function seg(box, val) {
-    [].forEach.call(box.children, function (b) {
-      b.setAttribute("aria-pressed", String(Number(b.dataset.v) === Number(val)));
-    });
-  }
-
-  /* ---------- voice in ---------- */
-  var TEAM = "(?:team|teams|tim|deem|dean|the team)";
-  var AW = "(?:a|ay|aye|eh|hey|hay|8|eight|ate|aid|alpha|able)";
-  var BW = "(?:b|be|bee|bea|p|pee|beat|beam|bravo|baker)";
-  // a bare word only scores when it is the whole utterance, so this set stays
-  // tight — "hey" or "be" on their own are too easy to say by accident
-  var AW_SOLO = "(?:a|ay|aye|8|eight|alpha)";
-  var BW_SOLO = "(?:b|bee|bea|bravo)";
-
-  // A team still on its default name is called by its letter. Once it has a real
-  // name, the letter is retired — two names for one side is just confusing.
-  function usesLetter(k) { return nameTokens(k).length === 0; }
-
-  function rules() {
-    var r = [
-      { cmd: "undo",  re: /\b(?:undo|oops|whoops|mistake|cancel that|scratch that|take that back|my bad)\b/g },
-      { cmd: "next",  re: /\b(?:next game|new game|next set)\b/g },
-      { cmd: "reset", re: /\b(?:reset(?: the)?(?: game| score)?|start over|zero zero|love all)\b/g }
-    ];
-    if (usesLetter("a")) {
-      r.push({ cmd: "a", re: new RegExp("\\b(?:" + TEAM + "\\s+" + AW + "|point\\s+(?:for\\s+|to\\s+)?" + AW + "|" + AW + "\\s+(?:point|scores?)|" + AW + "\\s+" + TEAM + ")\\b", "g") });
+      el.style.fontSize = size + "px";
+      el.style.maxWidth = prevMax || "";
     }
-    if (usesLetter("b")) {
-      r.push({ cmd: "b", re: new RegExp("\\b(?:" + TEAM + "\\s+" + BW + "|point\\s+(?:for\\s+|to\\s+)?" + BW + "|" + BW + "\\s+(?:point|scores?)|" + BW + "\\s+" + TEAM + ")\\b", "g") });
+
+    function fitNames() {
+      fitName("nameA");
+      fitName("nameB");
     }
-    // "Team V" / "point V", where V is the initial of a renamed team
-    var ini = initials();
-    ["a", "b"].forEach(function (k) {
-      if (!ini[k]) return;
-      var alt = LETTER[ini[k]].join("|");
-      r.push({ cmd: k, re: new RegExp("\\b(?:team|point)\\s+(?:" + alt + ")\\b", "g") });
+    window.addEventListener("resize", fitNames);
+    window.addEventListener("orientationchange", function () {
+      setTimeout(fitNames, 250);
     });
 
-    return r;
-  }
+    // Always "Team A" / "Team B" — the letters work no matter what the teams
+    // are called, so that is what we tell people to say.
+    function callPhrase(k) {
+      return "Team " + k.toUpperCase();
+    }
 
-  /* ---------- matching custom names by sound ----------
+    // The command list leads with the letter and lists the names as extras.
+    function updateCmdHelp() {
+      [
+        ["a", "cmdKa", "cmdDa", "blue"],
+        ["b", "cmdKb", "cmdDb", "green"],
+      ].forEach(function (row) {
+        var k = row[0],
+          named = nameTokens(k).length > 0,
+          letter = k.toUpperCase();
+        $(row[1]).textContent = "“Team " + letter + "”";
+
+        var also = ["“" + letter + "”", "“point " + letter + "”"];
+        if (named) {
+          also.unshift("“Team " + S.names[k] + "”");
+          var ini = initials()[k];
+          if (ini) also.push("“Team " + ini.toUpperCase() + "”");
+        } else {
+          also.push("“" + (k === "a" ? "alpha" : "bravo") + "”");
+        }
+        $(row[2]).textContent =
+          "Point to the " + row[3] + " side — also " + also.join(", ");
+      });
+    }
+
+    function pop(el) {
+      el.classList.remove("pop");
+      void el.offsetWidth;
+      el.classList.add("pop");
+    }
+
+    function seg(box, val) {
+      [].forEach.call(box.children, function (b) {
+        b.setAttribute(
+          "aria-pressed",
+          String(Number(b.dataset.v) === Number(val)),
+        );
+      });
+    }
+
+    /* ---------- voice in ---------- */
+    var TEAM = "(?:team|teams|tim|deem|dean|the team)";
+    var AW = "(?:a|ay|aye|eh|hey|hay|8|eight|ate|aid|alpha|able)";
+    var BW = "(?:b|be|bee|bea|p|pee|beat|beam|bravo|baker)";
+    // a bare word only scores when it is the whole utterance, so this set stays
+    // tight — "hey" or "be" on their own are too easy to say by accident
+    var AW_SOLO = "(?:a|ay|aye|8|eight|alpha)";
+    var BW_SOLO = "(?:b|bee|bea|bravo)";
+
+    // "Team A" is always the blue side and "Team B" always the green one, whatever
+    // the teams are named. Names are an addition, never a replacement.
+    function rules() {
+      var r = [
+        {
+          cmd: "undo",
+          re: /\b(?:undo|oops|whoops|mistake|cancel that|scratch that|take that back|my bad)\b/g,
+        },
+        { cmd: "next", re: /\b(?:next game|new game|next set)\b/g },
+        {
+          cmd: "reset",
+          re: /\b(?:reset(?: the)?(?: game| score)?|start over|zero zero|love all)\b/g,
+        },
+        {
+          cmd: "a",
+          re: new RegExp(
+            "\\b(?:" +
+              TEAM +
+              "\\s+" +
+              AW +
+              "|point\\s+(?:for\\s+|to\\s+)?" +
+              AW +
+              "|" +
+              AW +
+              "\\s+(?:point|scores?)|" +
+              AW +
+              "\\s+" +
+              TEAM +
+              ")\\b",
+            "g",
+          ),
+        },
+        {
+          cmd: "b",
+          re: new RegExp(
+            "\\b(?:" +
+              TEAM +
+              "\\s+" +
+              BW +
+              "|point\\s+(?:for\\s+|to\\s+)?" +
+              BW +
+              "|" +
+              BW +
+              "\\s+(?:point|scores?)|" +
+              BW +
+              "\\s+" +
+              TEAM +
+              ")\\b",
+            "g",
+          ),
+        },
+      ];
+      // "Team V" / "point V", where V is the initial of a renamed team
+      var ini = initials();
+      ["a", "b"].forEach(function (k) {
+        if (!ini[k]) return;
+        var alt = LETTER[ini[k]].join("|");
+        r.push({
+          cmd: k,
+          re: new RegExp("\\b(?:team|point)\\s+(?:" + alt + ")\\b", "g"),
+        });
+      });
+
+      return r;
+    }
+
+    /* ---------- matching custom names by sound ----------
      Speech-to-text almost never returns a name spelled the way it was typed:
-     "Irland" comes back as "Ireland" or "island". Comparing text exactly is
+     a typed "Nikki" comes back as "Nicky" or "Nikkei". Comparing text exactly is
      therefore useless for names, so we compare how they sound. */
 
-  function soundex(s) {
-    s = String(s).toUpperCase().replace(/[^A-Z]/g, "");
-    if (!s) return "";
-    var code = { B:1,F:1,P:1,V:1, C:2,G:2,J:2,K:2,Q:2,S:2,X:2,Z:2, D:3,T:3, L:4, M:5,N:5, R:6 };
-    var out = "", prev = code[s.charAt(0)] || 0;
-    for (var i = 1; i < s.length && out.length < 3; i++) {
-      var ch = s.charAt(i), c = code[ch] || 0;
-      if (c && c !== prev) out += c;
-      if (ch !== "H" && ch !== "W") prev = c;
-    }
-    return (s.charAt(0) + out + "000").slice(0, 4);
-  }
-
-  function lev(a, b) {
-    var m = a.length, n = b.length;
-    if (!m) return n;
-    if (!n) return m;
-    var prev = [], cur = [], i, j;
-    for (j = 0; j <= n; j++) prev[j] = j;
-    for (i = 1; i <= m; i++) {
-      cur[0] = i;
-      for (j = 1; j <= n; j++) {
-        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1,
-                          prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+    function soundex(s) {
+      s = String(s)
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "");
+      if (!s) return "";
+      var code = {
+        B: 1,
+        F: 1,
+        P: 1,
+        V: 1,
+        C: 2,
+        G: 2,
+        J: 2,
+        K: 2,
+        Q: 2,
+        S: 2,
+        X: 2,
+        Z: 2,
+        D: 3,
+        T: 3,
+        L: 4,
+        M: 5,
+        N: 5,
+        R: 6,
+      };
+      var out = "",
+        prev = code[s.charAt(0)] || 0;
+      for (var i = 1; i < s.length && out.length < 3; i++) {
+        var ch = s.charAt(i),
+          c = code[ch] || 0;
+        if (c && c !== prev) out += c;
+        if (ch !== "H" && ch !== "W") prev = c;
       }
-      var t = prev; prev = cur; cur = t;
+      return (s.charAt(0) + out + "000").slice(0, 4);
     }
-    return prev[n];
-  }
 
-  // The words of a team's name that are worth listening for.
-  function nameTokens(k) {
-    var n = String(S.names[k] || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim();
-    if (!n || /^team\s+[ab]$/.test(n)) return [];
-    return n.replace(/^team\s+/, "").split(/\s+/).filter(function (w) {
-      return w.length >= 3 && w !== "team";
-    });
-  }
+    function lev(a, b) {
+      var m = a.length,
+        n = b.length;
+      if (!m) return n;
+      if (!n) return m;
+      var prev = [],
+        cur = [],
+        i,
+        j;
+      for (j = 0; j <= n; j++) prev[j] = j;
+      for (i = 1; i <= m; i++) {
+        cur[0] = i;
+        for (j = 1; j <= n; j++) {
+          cur[j] = Math.min(
+            prev[j] + 1,
+            cur[j - 1] + 1,
+            prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1),
+          );
+        }
+        var t = prev;
+        prev = cur;
+        cur = t;
+      }
+      return prev[n];
+    }
 
-  /* ---------- calling a team by its initial ----------
-     "Team V" for Vernon. Recognisers spell letters out inconsistently, so each
+    // The words of a team's name that are worth listening for.
+    function nameTokens(k) {
+      var n = String(S.names[k] || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .trim();
+      if (!n || /^team\s+[ab]$/.test(n)) return [];
+      return n
+        .replace(/^team\s+/, "")
+        .split(/\s+/)
+        .filter(function (w) {
+          return w.length >= 3 && w !== "team";
+        });
+    }
+
+    /* ---------- calling a team by its initial ----------
+     "Team B" for Bob. Recognisers spell letters out inconsistently, so each
      letter carries the forms it commonly comes back as. */
-  var LETTER = {
-    a: ["a","ay","aye","eh","hey","eight","8"],  b: ["b","be","bee","bea","p","pee"],
-    c: ["c","see","sea"],       d: ["d","dee"],          e: ["e","ee"],
-    f: ["f","ef","eff"],        g: ["g","gee","jee"],    h: ["h","aitch","haitch"],
-    i: ["i","eye","aye"],       j: ["j","jay","jae"],    k: ["k","kay","cay"],
-    l: ["l","el","ell"],        m: ["m","em"],           n: ["n","en"],
-    o: ["o","oh","owe"],        p: ["p","pee","pea"],    q: ["q","cue","queue"],
-    r: ["r","are","ar"],        s: ["s","es","ess"],     t: ["t","tee","tea"],
-    u: ["u","you","yew","ewe"], v: ["v","vee","we","ve"],w: ["w","double u","dub"],
-    x: ["x","ex","ecks"],       y: ["y","why","wye"],    z: ["z","zed","zee"]
-  };
-  // forms that are ordinary words — fine after "team", never on their own
-  var RISKY = {
-    a:1, i:1, o:1, we:1, you:1, are:1, see:1, sea:1, be:1, tea:1, cue:1, queue:1,
-    why:1, eye:1, ewe:1, owe:1, hey:1, eh:1, ay:1, pea:1, eight:1, 8:1, ess:1, en:1
-  };
+    var LETTER = {
+      a: ["a", "ay", "aye", "eh", "hey", "eight", "8"],
+      b: ["b", "be", "bee", "bea", "p", "pee"],
+      c: ["c", "see", "sea"],
+      d: ["d", "dee"],
+      e: ["e", "ee"],
+      f: ["f", "ef", "eff"],
+      g: ["g", "gee", "jee"],
+      h: ["h", "aitch", "haitch"],
+      i: ["i", "eye", "aye"],
+      j: ["j", "jay", "jae"],
+      k: ["k", "kay", "cay"],
+      l: ["l", "el", "ell"],
+      m: ["m", "em"],
+      n: ["n", "en"],
+      o: ["o", "oh", "owe"],
+      p: ["p", "pee", "pea"],
+      q: ["q", "cue", "queue"],
+      r: ["r", "are", "ar"],
+      s: ["s", "es", "ess"],
+      t: ["t", "tee", "tea"],
+      u: ["u", "you", "yew", "ewe"],
+      v: ["v", "vee", "we", "ve"],
+      w: ["w", "double u", "dub"],
+      x: ["x", "ex", "ecks"],
+      y: ["y", "why", "wye"],
+      z: ["z", "zed", "zee"],
+    };
+    // forms that are ordinary words — fine after "team", never on their own
+    var RISKY = {
+      a: 1,
+      i: 1,
+      o: 1,
+      we: 1,
+      you: 1,
+      are: 1,
+      see: 1,
+      sea: 1,
+      be: 1,
+      tea: 1,
+      cue: 1,
+      queue: 1,
+      why: 1,
+      eye: 1,
+      ewe: 1,
+      owe: 1,
+      hey: 1,
+      eh: 1,
+      ay: 1,
+      pea: 1,
+      eight: 1,
+      8: 1,
+      ess: 1,
+      en: 1,
+    };
 
-  function initialFor(k) {
-    var toks = nameTokens(k);
-    if (!toks.length) return null;
-    var ch = toks[0].charAt(0);
-    return /[a-z]/.test(ch) && LETTER[ch] ? ch : null;
-  }
-
-  // An initial only counts when nothing else already answers to that letter.
-  function initials() {
-    var ia = initialFor("a"), ib = initialFor("b");
-    if (ia && ib && ia === ib) { ia = null; ib = null; }
-    if (ia === "b" && usesLetter("b")) ia = null;   // "B" still means the other side
-    if (ib === "a" && usesLetter("a")) ib = null;
-    return { a: ia, b: ib };
-  }
-
-  // How closely a spoken word matches a team's name. Lower is better, null is no match.
-  function nameScore(word, k) {
-    var toks = nameTokens(k), best = null, i;
-    for (i = 0; i < toks.length; i++) {
-      var w = toks[i];
-      if (word === w) return 0;
-      // three-letter names are too easy to collide with ordinary speech
-      if (word.length < 4 || w.length < 4) continue;
-      var d = lev(word, w);
-      // Names are usually heard with the right opening sound, so a shared first
-      // letter earns extra tolerance. Without it we stay strict, which keeps
-      // ordinary words ("person" against "Vernon") from scoring points.
-      var maxLen = Math.max(w.length, word.length);
-      var sameHead = word.charAt(0) === w.charAt(0);
-      var tol = (maxLen >= 8 || (sameHead && maxLen >= 6)) ? 2 : 1;
-      if (d <= tol) best = best === null ? d : Math.min(best, d);
-      else if (soundex(word) === soundex(w)) best = best === null ? 1.5 : Math.min(best, 1.5);
-    }
-    return best;
-  }
-
-  function parse(text) {
-    var t = String(text).toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-    if (!t) return [];
-
-    // a bare "a" / "b" only counts when it is the whole utterance
-    if (usesLetter("a") && new RegExp("^" + AW_SOLO + "$").test(t)) return ["a"];
-    if (usesLetter("b") && new RegExp("^" + BW_SOLO + "$").test(t)) return ["b"];
-
-    // a lone initial, when it isn't also an everyday word
-    var solo = initials(), sk;
-    for (sk in solo) {
-      if (!solo[sk]) continue;
-      if (LETTER[solo[sk]].some(function (f) { return f === t && !RISKY[f]; })) return [sk];
+    function initialFor(k) {
+      var toks = nameTokens(k);
+      if (!toks.length) return null;
+      var ch = toks[0].charAt(0);
+      return /[a-z]/.test(ch) && LETTER[ch] ? ch : null;
     }
 
-    var hits = [];
-    rules().forEach(function (rule) {
-      rule.re.lastIndex = 0;
-      var m;
-      while ((m = rule.re.exec(t)) !== null) {
-        hits.push({ at: m.index, end: m.index + m[0].length, cmd: rule.cmd });
-        if (m[0].length === 0) rule.re.lastIndex++;
+    // An initial only counts when nothing else already answers to that letter.
+    // A and B are permanently spoken for, so a team named Bob keeps no initial.
+    function initials() {
+      var ia = initialFor("a"),
+        ib = initialFor("b");
+      if (ia && ib && ia === ib) {
+        ia = null;
+        ib = null;
       }
-    });
+      if (ia === "a" || ia === "b") ia = null;
+      if (ib === "a" || ib === "b") ib = null;
+      return { a: ia, b: ib };
+    }
 
-    // now the spoken words, matched against the team names by sound.
-    // Neighbouring words that hit the same team are one name, not two points —
-    // "red dragons" must score once.
-    var wordRe = /[a-z0-9]+/g, w, ord = -1, run = null;
-    while ((w = wordRe.exec(t)) !== null) {
-      ord++;
-      if (w[0] === "team") continue;
-      var sa = nameScore(w[0], "a"), sb = nameScore(w[0], "b");
-      if (sa === null && sb === null) continue;
-      var pick;
-      if (sa !== null && sb !== null) {
-        if (sa === sb) continue;              // both names sound alike here — too risky to guess
-        pick = sa < sb ? "a" : "b";
-      } else {
-        pick = sa !== null ? "a" : "b";
+    // How closely a spoken word matches a team's name. Lower is better, null is no match.
+    function nameScore(word, k) {
+      var toks = nameTokens(k),
+        best = null,
+        i;
+      for (i = 0; i < toks.length; i++) {
+        var w = toks[i];
+        if (word === w) return 0;
+        // three-letter names are too easy to collide with ordinary speech
+        if (word.length < 4 || w.length < 4) continue;
+        var d = lev(word, w);
+        // Names are usually heard with the right opening sound, so a shared first
+        // letter earns extra tolerance. Without it we stay strict, which keeps
+        // ordinary words ("season" against "Susan") from scoring points.
+        var maxLen = Math.max(w.length, word.length);
+        var sameHead = word.charAt(0) === w.charAt(0);
+        var tol = maxLen >= 8 || (sameHead && maxLen >= 6) ? 2 : 1;
+        if (d <= tol) best = best === null ? d : Math.min(best, d);
+        else if (soundex(word) === soundex(w))
+          best = best === null ? 1.5 : Math.min(best, 1.5);
       }
-      if (run && run.cmd === pick && run.ord === ord - 1) {
-        run.end = w.index + w[0].length;      // same name continuing
-        run.ord = ord;
-        continue;
+      return best;
+    }
+
+    function parse(text) {
+      var t = String(text)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!t) return [];
+
+      // a bare "a" / "b" only counts when it is the whole utterance
+      if (new RegExp("^" + AW_SOLO + "$").test(t)) return ["a"];
+      if (new RegExp("^" + BW_SOLO + "$").test(t)) return ["b"];
+
+      // a lone initial, when it isn't also an everyday word
+      var solo = initials(),
+        sk;
+      for (sk in solo) {
+        if (!solo[sk]) continue;
+        if (
+          LETTER[solo[sk]].some(function (f) {
+            return f === t && !RISKY[f];
+          })
+        )
+          return [sk];
       }
-      run = { at: w.index, end: w.index + w[0].length, cmd: pick, ord: ord };
-      hits.push(run);
-    }
 
-    hits.sort(function (x, y) { return x.at - y.at || y.end - x.end; });
+      var hits = [];
+      rules().forEach(function (rule) {
+        rule.re.lastIndex = 0;
+        var m;
+        while ((m = rule.re.exec(t)) !== null) {
+          hits.push({ at: m.index, end: m.index + m[0].length, cmd: rule.cmd });
+          if (m[0].length === 0) rule.re.lastIndex++;
+        }
+      });
 
-    var out = [], edge = -1;
-    hits.forEach(function (h) {
-      if (h.at < edge) return;          // drop overlaps so "team a point" scores once
-      edge = h.end;
-      out.push(h.cmd);
-    });
-    return out;
-  }
-
-  function run(cmds) {
-    cmds.forEach(function (c) {
-      if (c === "a" || c === "b") {
-        if (S.won || S.matchWon) return;
-        point(c);
-      } else if (c === "undo") {
-        undo();
-      } else if (c === "next") {
-        if (S.matchWon) newMatch(); else nextGame();
-      } else if (c === "reset") {
-        resetGame();
-      }
-    });
-  }
-
-  function caption(text, warn, sticky) {
-    var el = $("heard");
-    el.textContent = text;
-    el.classList.toggle("warn", !!warn);
-    el.classList.add("on");
-    clearTimeout(captionTimer);
-    if (sticky) return;
-    captionTimer = setTimeout(function () { el.classList.remove("on"); }, warn ? 6000 : 2600);
-  }
-
-  /* ---------- where are we running? ---------- */
-  var UA = navigator.userAgent;
-  var embedded = (function () {
-    try { return window.self !== window.top; } catch (e) { return true; }
-  })();
-  var iOS = /iP(hone|ad|od)/.test(UA) ||
-            (/Mac/.test(navigator.platform || "") && navigator.maxTouchPoints > 1);
-  var iOSNonSafari = iOS && /CriOS|FxiOS|EdgiOS|OPiOS/.test(UA);
-  var isFirefox = /Firefox/.test(UA);
-
-  // Why can't this browser listen? Returns null when it can.
-  function voiceBlocker() {
-    if (window.SpeechRecognition || window.webkitSpeechRecognition) return null;
-    if (iOSNonSafari) {
-      return "On iPhone, Apple only gives the speech API to Safari. Open this page in Safari — " +
-             "or just tap a side to score.";
-    }
-    if (isFirefox) {
-      return "Firefox has no speech recognition. Chrome, Edge or Safari will listen — " +
-             "or just tap a side to score.";
-    }
-    return "This browser has no speech recognition. Chrome, Edge or Safari will listen — " +
-           "or just tap a side to score.";
-  }
-
-  // Called after the browser refuses the mic, to say which of the two reasons it was.
-  function explainRefusal() {
-    if (embedded) {
-      caption("The preview frame won't pass the mic through. Open this page in its own tab, " +
-              "then tap the mic again.", true, true);
-      return;
-    }
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      caption("Microphone blocked for this page. Allow it in the browser's site settings, " +
-              "then tap the mic again.", true, true);
-      return;
-    }
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-      stream.getTracks().forEach(function (t) { t.stop(); });
-      // Mic itself is fine, so it is speech recognition specifically that was refused.
-      caption("This page can use the mic, but speech recognition was refused. Check the site " +
-              "permissions, then tap the mic again.", true, true);
-    }).catch(function () {
-      caption("Microphone blocked for this page. Click the permission icon in the address bar, " +
-              "allow the microphone, then tap the mic again.", true, true);
-    });
-  }
-
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = null, want = false, restartAt = 0, blocked = false;
-
-  function makeRec() {
-    var r = new SR();
-    r.continuous = true;
-    r.interimResults = true;
-    r.maxAlternatives = 3;
-    r.lang = (navigator.language && /^en/i.test(navigator.language)) ? navigator.language : "en-GB";
-
-    // Lifecycle events give us a truthful mic state without opening a second
-    // audio stream: audiostart means the browser really opened the mic,
-    // soundstart/speechstart mean it is picking something up right now.
-    r.onstart = function () { micState("starting"); };
-    r.onaudiostart = function () { micState("live"); };
-    r.onsoundstart = function () { hearing(); };
-    r.onspeechstart = function () { hearing(); };
-    r.onspeechend = function () { micState("live"); };
-    r.onsoundend = function () { micState("live"); };
-    r.onaudioend = function () { micState("starting"); };
-
-    r.onresult = function (e) {
-      hearing();   // fallback for browsers that skip the sound events
-      if (Date.now() < speakGuardUntil) return;   // don't hear our own announcement
-      for (var i = e.resultIndex; i < e.results.length; i++) {
-        var res = e.results[i];
-        if (!res.isFinal) {
-          if (res[0] && res[0].transcript.trim()) caption("“" + res[0].transcript.trim() + "”");
+      // now the spoken words, matched against the team names by sound.
+      // Neighbouring words that hit the same team are one name, not two points —
+      // "red dragons" must score once.
+      var wordRe = /[a-z0-9]+/g,
+        w,
+        ord = -1,
+        run = null;
+      while ((w = wordRe.exec(t)) !== null) {
+        ord++;
+        if (w[0] === "team") continue;
+        var sa = nameScore(w[0], "a"),
+          sb = nameScore(w[0], "b");
+        if (sa === null && sb === null) continue;
+        var pick;
+        if (sa !== null && sb !== null) {
+          if (sa === sb) continue; // both names sound alike here — too risky to guess
+          pick = sa < sb ? "a" : "b";
+        } else {
+          pick = sa !== null ? "a" : "b";
+        }
+        if (run && run.cmd === pick && run.ord === ord - 1) {
+          run.end = w.index + w[0].length; // same name continuing
+          run.ord = ord;
           continue;
         }
-        var cmds = [], heardText = "";
-        for (var k = 0; k < res.length; k++) {
-          var txt = res[k].transcript.trim();
-          if (!txt) continue;
-          if (!heardText) heardText = txt;
-          var got = parse(txt);
-          if (got.length) { cmds = got; heardText = txt; break; }
+        run = { at: w.index, end: w.index + w[0].length, cmd: pick, ord: ord };
+        hits.push(run);
+      }
+
+      hits.sort(function (x, y) {
+        return x.at - y.at || y.end - x.end;
+      });
+
+      var out = [],
+        edge = -1;
+      hits.forEach(function (h) {
+        if (h.at < edge) return; // drop overlaps so "team a point" scores once
+        edge = h.end;
+        out.push(h.cmd);
+      });
+      return out;
+    }
+
+    function run(cmds) {
+      cmds.forEach(function (c) {
+        if (c === "a" || c === "b") {
+          if (S.won || S.matchWon) return;
+          point(c);
+        } else if (c === "undo") {
+          undo();
+        } else if (c === "next") {
+          if (S.matchWon) newMatch();
+          else nextGame();
+        } else if (c === "reset") {
+          resetGame();
         }
-        if (heardText) caption("“" + heardText + "”" + (cmds.length ? "" : "  ·  no command"));
-        if (cmds.length) run(cmds);
+      });
+    }
+
+    function caption(text, warn, sticky) {
+      var el = $("heard");
+      el.textContent = text;
+      el.classList.toggle("warn", !!warn);
+      el.classList.add("on");
+      clearTimeout(captionTimer);
+      if (sticky) return;
+      captionTimer = setTimeout(
+        function () {
+          el.classList.remove("on");
+        },
+        warn ? 6000 : 2600,
+      );
+    }
+
+    /* ---------- where are we running? ---------- */
+    var UA = navigator.userAgent;
+    var embedded = (function () {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true;
       }
-    };
+    })();
+    var iOS =
+      /iP(hone|ad|od)/.test(UA) ||
+      (/Mac/.test(navigator.platform || "") && navigator.maxTouchPoints > 1);
+    var iOSNonSafari = iOS && /CriOS|FxiOS|EdgiOS|OPiOS/.test(UA);
+    var isFirefox = /Firefox/.test(UA);
 
-    r.onerror = function (e) {
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-        blocked = true;
-        want = false;
-        micState("off");
-        explainRefusal();
-      } else if (e.error === "audio-capture") {
-        want = false;
-        micState("off");
-        caption("No microphone available on this device", true);
+    // Why can't this browser listen? Returns null when it can.
+    function voiceBlocker() {
+      if (window.SpeechRecognition || window.webkitSpeechRecognition)
+        return null;
+      if (iOSNonSafari) {
+        return (
+          "On iPhone, Apple only gives the speech API to Safari. Open this page in Safari — " +
+          "or just tap a side to score."
+        );
       }
-      // no-speech / aborted / network fall through to onend, which restarts
-    };
+      if (isFirefox) {
+        return (
+          "Firefox has no speech recognition. Chrome, Edge or Safari will listen — " +
+          "or just tap a side to score."
+        );
+      }
+      return (
+        "This browser has no speech recognition. Chrome, Edge or Safari will listen — " +
+        "or just tap a side to score."
+      );
+    }
 
-    r.onend = function () {
-      micState(want ? "starting" : "off");
-      if (!want) return;
-      var wait = Math.max(0, 350 - (Date.now() - restartAt));
-      setTimeout(start, wait);
-    };
+    // Called after the browser refuses the mic, to say which of the two reasons it was.
+    function explainRefusal() {
+      if (embedded) {
+        caption(
+          "The preview frame won't pass the mic through. Open this page in its own tab, " +
+            "then tap the mic again.",
+          true,
+          true,
+        );
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        caption(
+          "Microphone blocked for this page. Allow it in the browser's site settings, " +
+            "then tap the mic again.",
+          true,
+          true,
+        );
+        return;
+      }
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(function (stream) {
+          stream.getTracks().forEach(function (t) {
+            t.stop();
+          });
+          // Mic itself is fine, so it is speech recognition specifically that was refused.
+          caption(
+            "This page can use the mic, but speech recognition was refused. Check the site " +
+              "permissions, then tap the mic again.",
+            true,
+            true,
+          );
+        })
+        .catch(function () {
+          caption(
+            "Microphone blocked for this page. Click the permission icon in the address bar, " +
+              "allow the microphone, then tap the mic again.",
+            true,
+            true,
+          );
+        });
+    }
 
-    return r;
-  }
-
-  function start() {
-    if (!SR || !want) return;
-    if (!rec) rec = makeRec();
-    restartAt = Date.now();
-    try { rec.start(); }
-    catch (e) { setTimeout(function () { if (want) { try { rec.start(); } catch (e2) {} } }, 500); }
-  }
-
-  /* off = not listening, starting = stream not open yet, live = mic captured,
-     hearing = sound arriving this moment */
-  var hearTimer = null;
-
-  function micState(state) {
-    var m = $("mic");
-    m.classList.remove("starting", "live", "hearing");
-    m.classList.toggle("on", state !== "off");
-    if (state !== "off") m.classList.add(state === "hearing" ? "live" : state);
-    if (state === "hearing") m.classList.add("live", "hearing");
-    m.setAttribute("aria-pressed", String(!!want));
-    m.setAttribute("aria-label",
-      state === "off" ? "Start listening"
-        : state === "starting" ? "Opening the microphone"
-        : "Listening — tap to stop");
-  }
-
-  function hearing() {
-    var m = $("mic");
-    m.classList.remove("starting");
-    m.classList.add("on", "live", "hearing");
-    clearTimeout(hearTimer);
-    hearTimer = setTimeout(function () { m.classList.remove("hearing"); }, 700);
-  }
-
-  function toggleMic() {
-    var why = voiceBlocker();
-    if (why) { caption(why, true, true); return; }
-    unlockAudio();
-    if (want) {
-      want = false;
-      try { rec && rec.stop(); } catch (e) {}
-      micState("off");
-      caption("Listening off");
-    } else {
-      want = true;
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var rec = null,
+      want = false,
+      restartAt = 0,
       blocked = false;
-      start();
-      caption("Listening — call “" + callPhrase("a") + "” or “" + callPhrase("b") + "”");
+
+    function makeRec() {
+      var r = new SR();
+      r.continuous = true;
+      r.interimResults = true;
+      r.maxAlternatives = 3;
+      r.lang =
+        navigator.language && /^en/i.test(navigator.language)
+          ? navigator.language
+          : "en-GB";
+
+      // Lifecycle events give us a truthful mic state without opening a second
+      // audio stream: audiostart means the browser really opened the mic,
+      // soundstart/speechstart mean it is picking something up right now.
+      r.onstart = function () {
+        micState("starting");
+      };
+      r.onaudiostart = function () {
+        micState("live");
+      };
+      r.onsoundstart = function () {
+        hearing();
+      };
+      r.onspeechstart = function () {
+        hearing();
+      };
+      r.onspeechend = function () {
+        micState("live");
+      };
+      r.onsoundend = function () {
+        micState("live");
+      };
+      r.onaudioend = function () {
+        micState("starting");
+      };
+
+      r.onresult = function (e) {
+        hearing(); // fallback for browsers that skip the sound events
+        if (Date.now() < speakGuardUntil) return; // don't hear our own announcement
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          var res = e.results[i];
+          if (!res.isFinal) {
+            if (res[0] && res[0].transcript.trim())
+              caption("“" + res[0].transcript.trim() + "”");
+            continue;
+          }
+          var cmds = [],
+            heardText = "";
+          for (var k = 0; k < res.length; k++) {
+            var txt = res[k].transcript.trim();
+            if (!txt) continue;
+            if (!heardText) heardText = txt;
+            var got = parse(txt);
+            if (got.length) {
+              cmds = got;
+              heardText = txt;
+              break;
+            }
+          }
+          if (heardText)
+            caption(
+              "“" + heardText + "”" + (cmds.length ? "" : "  ·  no command"),
+            );
+          if (cmds.length) run(cmds);
+        }
+      };
+
+      r.onerror = function (e) {
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+          blocked = true;
+          want = false;
+          micState("off");
+          explainRefusal();
+        } else if (e.error === "audio-capture") {
+          want = false;
+          micState("off");
+          caption("No microphone available on this device", true);
+        }
+        // no-speech / aborted / network fall through to onend, which restarts
+      };
+
+      r.onend = function () {
+        micState(want ? "starting" : "off");
+        if (!want) return;
+        var wait = Math.max(0, 350 - (Date.now() - restartAt));
+        setTimeout(start, wait);
+      };
+
+      return r;
     }
-  }
 
-  /* ---------- screen wake lock ---------- */
-  var lock = null;
-  function acquireWake() {
-    if (!S.wake || !navigator.wakeLock) return;
-    navigator.wakeLock.request("screen").then(function (l) {
-      lock = l;
-      l.addEventListener("release", function () { lock = null; });
-    }).catch(function () {});
-  }
-  function releaseWake() {
-    if (lock) { try { lock.release(); } catch (e) {} lock = null; }
-  }
-  document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") {
-      acquireWake();
-      if (want) start();
+    function start() {
+      if (!SR || !want) return;
+      if (!rec) rec = makeRec();
+      restartAt = Date.now();
+      try {
+        rec.start();
+      } catch (e) {
+        setTimeout(function () {
+          if (want) {
+            try {
+              rec.start();
+            } catch (e2) {}
+          }
+        }, 500);
+      }
     }
-  });
 
-  /* ---------- wiring ---------- */
-  $("sideA").addEventListener("click", function () { unlockAudio(); point("a"); });
-  $("sideB").addEventListener("click", function () { unlockAudio(); point("b"); });
-  $("undo").addEventListener("click", undo);
-  $("mic").addEventListener("click", toggleMic);
+    /* off = not listening, starting = stream not open yet, live = mic captured,
+     hearing = sound arriving this moment */
+    var hearTimer = null;
 
-  $("overNext").addEventListener("click", function (e) {
-    e.stopPropagation();
-    if (S.matchWon) newMatch(); else nextGame();
-  });
+    function micState(state) {
+      var m = $("mic");
+      m.classList.remove("starting", "live", "hearing");
+      m.classList.toggle("on", state !== "off");
+      if (state !== "off")
+        m.classList.add(state === "hearing" ? "live" : state);
+      if (state === "hearing") m.classList.add("live", "hearing");
+      m.setAttribute("aria-pressed", String(!!want));
+      m.setAttribute(
+        "aria-label",
+        state === "off"
+          ? "Start listening"
+          : state === "starting"
+            ? "Opening the microphone"
+            : "Listening — tap to stop",
+      );
+    }
 
-  var sheet = $("sheet"), scrim = $("scrim");
-  function openSheet() { sheet.classList.add("on"); scrim.classList.add("on"); }
-  function closeSheet() { sheet.classList.remove("on"); scrim.classList.remove("on"); }
-  $("menu").addEventListener("click", openSheet);
-  $("closeSheet").addEventListener("click", closeSheet);
-  scrim.addEventListener("click", closeSheet);
+    function hearing() {
+      var m = $("mic");
+      m.classList.remove("starting");
+      m.classList.add("on", "live", "hearing");
+      clearTimeout(hearTimer);
+      hearTimer = setTimeout(function () {
+        m.classList.remove("hearing");
+      }, 700);
+    }
 
-  ["inA", "inB"].forEach(function (id) {
-    $(id).addEventListener("input", function () {
-      var k = id === "inA" ? "a" : "b";
-      S.names[k] = this.value.trim() || (k === "a" ? "Team A" : "Team B");
-      setName(k === "a" ? "nameA" : "nameB", S.names[k]);
-      updateCmdHelp();
+    function toggleMic() {
+      var why = voiceBlocker();
+      if (why) {
+        caption(why, true, true);
+        return;
+      }
+      unlockAudio();
+      if (want) {
+        want = false;
+        try {
+          rec && rec.stop();
+        } catch (e) {}
+        micState("off");
+        caption("Listening off");
+      } else {
+        want = true;
+        blocked = false;
+        start();
+        caption(
+          "Listening — call “" +
+            callPhrase("a") +
+            "” or “" +
+            callPhrase("b") +
+            "”",
+        );
+      }
+    }
+
+    /* ---------- screen wake lock ---------- */
+    var lock = null;
+    function acquireWake() {
+      if (!S.wake || !navigator.wakeLock) return;
+      navigator.wakeLock
+        .request("screen")
+        .then(function (l) {
+          lock = l;
+          l.addEventListener("release", function () {
+            lock = null;
+          });
+        })
+        .catch(function () {});
+    }
+    function releaseWake() {
+      if (lock) {
+        try {
+          lock.release();
+        } catch (e) {}
+        lock = null;
+      }
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") {
+        acquireWake();
+        if (want) start();
+      }
+    });
+
+    /* ---------- wiring ---------- */
+    $("sideA").addEventListener("click", function () {
+      unlockAudio();
+      point("a");
+    });
+    $("sideB").addEventListener("click", function () {
+      unlockAudio();
+      point("b");
+    });
+    $("undo").addEventListener("click", undo);
+    $("mic").addEventListener("click", toggleMic);
+
+    $("overNext").addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (S.matchWon) newMatch();
+      else nextGame();
+    });
+
+    var sheet = $("sheet"),
+      scrim = $("scrim");
+    function openSheet() {
+      sheet.classList.add("on");
+      scrim.classList.add("on");
+    }
+    function closeSheet() {
+      sheet.classList.remove("on");
+      scrim.classList.remove("on");
+    }
+    $("menu").addEventListener("click", openSheet);
+    $("closeSheet").addEventListener("click", closeSheet);
+    scrim.addEventListener("click", closeSheet);
+
+    ["inA", "inB"].forEach(function (id) {
+      $(id).addEventListener("input", function () {
+        var k = id === "inA" ? "a" : "b";
+        S.names[k] = this.value.trim() || (k === "a" ? "Team A" : "Team B");
+        setName(k === "a" ? "nameA" : "nameB", S.names[k]);
+        updateCmdHelp();
+        save();
+      });
+      $(id).addEventListener("blur", render);
+    });
+
+    $("segTarget").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      S.target = Number(b.dataset.v);
+      // a score already past the new target can't stand — restart this game
+      if (S.a >= S.target || S.b >= S.target || S.won) {
+        S.a = 0;
+        S.b = 0;
+        S.won = null;
+        S.matchWon = null;
+      }
+      render();
       save();
     });
-    $(id).addEventListener("blur", render);
-  });
 
-  $("segTarget").addEventListener("click", function (e) {
-    var b = e.target.closest("button");
-    if (!b) return;
-    S.target = Number(b.dataset.v);
-    // a score already past the new target can't stand — restart this game
-    if (S.a >= S.target || S.b >= S.target || S.won) { S.a = 0; S.b = 0; S.won = null; S.matchWon = null; }
-    render(); save();
-  });
-
-  $("segBest").addEventListener("click", function (e) {
-    var b = e.target.closest("button");
-    if (!b) return;
-    S.bestOf = Number(b.dataset.v);
-    if (S.gamesA >= needed() || S.gamesB >= needed()) {
-      S.matchWon = S.gamesA > S.gamesB ? "a" : "b";
-    } else {
-      S.matchWon = null;
-    }
-    render(); save();
-  });
-
-  function sw(id, key, after) {
-    $(id).addEventListener("click", function () {
-      S[key] = !S[key];
-      this.setAttribute("aria-pressed", String(S[key]));
-      if (after) after();
+    $("segBest").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      S.bestOf = Number(b.dataset.v);
+      if (S.gamesA >= needed() || S.gamesB >= needed()) {
+        S.matchWon = S.gamesA > S.gamesB ? "a" : "b";
+      } else {
+        S.matchWon = null;
+      }
+      render();
       save();
     });
-  }
-  sw("swSpeak", "speak", function () { if (S.speak) say("Ready"); });
-  sw("swBeep", "beep", function () { if (S.beep) beep("a"); });
-  sw("swWake", "wake", function () { if (S.wake) acquireWake(); else releaseWake(); });
 
-  $("newMatch").addEventListener("click", function () {
-    newMatch();
-    closeSheet();
-  });
-
-  // keyboard, for when it's propped next to a laptop
-  document.addEventListener("keydown", function (e) {
-    if (e.target.tagName === "INPUT") return;
-    var k = e.key.toLowerCase();
-    if (k === "a") { point("a"); }
-    else if (k === "b") { point("b"); }
-    else if (k === "z" || k === "backspace") { e.preventDefault(); undo(); }
-    else if (k === "escape") { closeSheet(); }
-  });
-
-  /* ---------- voice status readout ---------- */
-  function browserName() {
-    if (iOSNonSafari) return "This browser on iPhone";
-    if (isFirefox) return "Firefox";
-    if (/Edg\//.test(UA)) return "Edge";
-    if (/Chrome\//.test(UA)) return "Chrome";
-    if (/Safari/.test(UA)) return "Safari";
-    return "This browser";
-  }
-
-  function showVoiceStatus() {
-    var box = $("vstat"), txt = $("vtext"), tab = $("ownTab");
-    var why = voiceBlocker();
-    box.classList.remove("ok", "warn", "bad");
-
-    if (why) {
-      box.classList.add("bad");
-      txt.textContent = why;
-      tab.hidden = !embedded;
-      return;
+    function sw(id, key, after) {
+      $(id).addEventListener("click", function () {
+        S[key] = !S[key];
+        this.setAttribute("aria-pressed", String(S[key]));
+        if (after) after();
+        save();
+      });
     }
-    if (embedded) {
-      box.classList.add("warn");
-      txt.textContent = browserName() + " can listen, but this page is running inside a preview " +
-        "frame that blocks the microphone. Open it in its own tab and voice will work.";
-      tab.hidden = false;
-      return;
+    sw("swSpeak", "speak", function () {
+      if (S.speak) say("Ready");
+    });
+    sw("swBeep", "beep", function () {
+      if (S.beep) beep("a");
+    });
+    sw("swWake", "wake", function () {
+      if (S.wake) acquireWake();
+      else releaseWake();
+    });
+
+    $("newMatch").addEventListener("click", function () {
+      newMatch();
+      closeSheet();
+    });
+
+    /* ---------- how-to page ---------- */
+    function showIntro() {
+      // reflect the current team names, in case it's reopened after renaming
+      $("introCall").textContent =
+        "Say “" +
+        callPhrase("a") +
+        "” or “" +
+        callPhrase("b") +
+        "” every time someone scores.";
+      $("intro").hidden = false;
     }
-    box.classList.add("ok");
-    txt.textContent = browserName() + " can listen. Tap the mic and allow the microphone when asked.";
-    tab.hidden = true;
-  }
+    function hideIntro() {
+      $("intro").hidden = true;
+      S.seen = true;
+      save();
+      fitNames(); // the court was behind the overlay; re-measure now it's clear
+    }
+    $("introGo").addEventListener("click", hideIntro);
+    $("showIntro").addEventListener("click", function () {
+      closeSheet();
+      showIntro();
+    });
 
-  $("ownTab").addEventListener("click", function () {
-    window.open(location.href, "_blank", "noopener");
-  });
+    // keyboard, for when it's propped next to a laptop
+    document.addEventListener("keydown", function (e) {
+      if (e.target.tagName === "INPUT") return;
+      var k = e.key.toLowerCase();
+      if (k === "a") {
+        point("a");
+      } else if (k === "b") {
+        point("b");
+      } else if (k === "z" || k === "backspace") {
+        e.preventDefault();
+        undo();
+      } else if (k === "escape") {
+        closeSheet();
+      }
+    });
 
-  /* ---------- microphone test ----------
+    /* ---------- voice status readout ---------- */
+    function browserName() {
+      if (iOSNonSafari) return "This browser on iPhone";
+      if (isFirefox) return "Firefox";
+      if (/Edg\//.test(UA)) return "Edge";
+      if (/Chrome\//.test(UA)) return "Chrome";
+      if (/Safari/.test(UA)) return "Safari";
+      return "This browser";
+    }
+
+    function showVoiceStatus() {
+      var box = $("vstat"),
+        txt = $("vtext"),
+        tab = $("ownTab");
+      var why = voiceBlocker();
+      box.classList.remove("ok", "warn", "bad");
+
+      if (why) {
+        box.classList.add("bad");
+        txt.textContent = why;
+        tab.hidden = !embedded;
+        return;
+      }
+      if (embedded) {
+        box.classList.add("warn");
+        txt.textContent =
+          browserName() +
+          " can listen, but this page is running inside a preview " +
+          "frame that blocks the microphone. Open it in its own tab and voice will work.";
+        tab.hidden = false;
+        return;
+      }
+      box.classList.add("ok");
+      txt.textContent =
+        browserName() +
+        " can listen. Tap the mic and allow the microphone when asked.";
+      tab.hidden = true;
+    }
+
+    $("ownTab").addEventListener("click", function () {
+      window.open(location.href, "_blank", "noopener");
+    });
+
+    /* ---------- microphone test ----------
      Opens its own short-lived audio stream and draws the real input level, so
      you can confirm the hardware is picking you up. Recognition is paused for
      the duration — on iOS the two contend for the audio session. */
-  var testing = false;
+    var testing = false;
 
-  $("micTest").addEventListener("click", function () {
-    if (testing) return;
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      caption("This browser can't open the microphone for a test", true);
-      return;
-    }
-    testing = true;
+    $("micTest").addEventListener("click", function () {
+      if (testing) return;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        caption("This browser can't open the microphone for a test", true);
+        return;
+      }
+      testing = true;
 
-    var resume = want;
-    if (want) { want = false; try { rec && rec.stop(); } catch (e) {} micState("off"); }
+      var resume = want;
+      if (want) {
+        want = false;
+        try {
+          rec && rec.stop();
+        } catch (e) {}
+        micState("off");
+      }
 
-    var btn = this, meter = $("meter"), fill = $("meterFill");
-    btn.textContent = "Starting…";
-    meter.hidden = false;
-    unlockAudio();
+      var btn = this,
+        meter = $("meter"),
+        fill = $("meterFill");
+      btn.textContent = "Starting…";
+      meter.hidden = false;
+      unlockAudio();
 
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      var ctx = new Ctx();
-      var src = ctx.createMediaStreamSource(stream);
-      var an = ctx.createAnalyser();
-      an.fftSize = 1024;
-      src.connect(an);
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(function (stream) {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          var ctx = new Ctx();
+          var src = ctx.createMediaStreamSource(stream);
+          var an = ctx.createAnalyser();
+          an.fftSize = 1024;
+          src.connect(an);
 
-      var buf = new Uint8Array(an.fftSize);
-      var until = Date.now() + 8000;
-      var peak = 0;
+          var buf = new Uint8Array(an.fftSize);
+          var until = Date.now() + 8000;
+          var peak = 0;
 
-      btn.textContent = "Say something…";
+          btn.textContent = "Say something…";
 
-      (function draw() {
-        an.getByteTimeDomainData(buf);
-        var sum = 0;
-        for (var i = 0; i < buf.length; i++) {
-          var v = (buf[i] - 128) / 128;
-          sum += v * v;
-        }
-        var level = Math.min(1, Math.sqrt(sum / buf.length) * 4.5);
-        if (level > peak) peak = level;
-        fill.style.width = (level * 100).toFixed(1) + "%";
+          (function draw() {
+            an.getByteTimeDomainData(buf);
+            var sum = 0;
+            for (var i = 0; i < buf.length; i++) {
+              var v = (buf[i] - 128) / 128;
+              sum += v * v;
+            }
+            var level = Math.min(1, Math.sqrt(sum / buf.length) * 4.5);
+            if (level > peak) peak = level;
+            fill.style.width = (level * 100).toFixed(1) + "%";
 
-        if (Date.now() < until) { requestAnimationFrame(draw); return; }
+            if (Date.now() < until) {
+              requestAnimationFrame(draw);
+              return;
+            }
 
-        stream.getTracks().forEach(function (t) { t.stop(); });
-        try { ctx.close(); } catch (e) {}
-        fill.style.width = "0%";
-        meter.hidden = true;
-        btn.textContent = peak > 0.06 ? "Microphone works — test again" : "Heard nothing — test again";
-        caption(peak > 0.06
-          ? "Microphone is picking you up"
-          : "The mic opened but no sound came through — check it isn't muted", peak <= 0.06);
-        testing = false;
-        if (resume) { want = true; blocked = false; start(); }
-      })();
-    }).catch(function () {
-      meter.hidden = true;
-      btn.textContent = "Test the microphone";
-      testing = false;
-      explainRefusal();
-      if (resume) { want = true; start(); }
+            stream.getTracks().forEach(function (t) {
+              t.stop();
+            });
+            try {
+              ctx.close();
+            } catch (e) {}
+            fill.style.width = "0%";
+            meter.hidden = true;
+            btn.textContent =
+              peak > 0.06
+                ? "Microphone works — test again"
+                : "Heard nothing — test again";
+            caption(
+              peak > 0.06
+                ? "Microphone is picking you up"
+                : "The mic opened but no sound came through — check it isn't muted",
+              peak <= 0.06,
+            );
+            testing = false;
+            if (resume) {
+              want = true;
+              blocked = false;
+              start();
+            }
+          })();
+        })
+        .catch(function () {
+          meter.hidden = true;
+          btn.textContent = "Test the microphone";
+          testing = false;
+          explainRefusal();
+          if (resume) {
+            want = true;
+            start();
+          }
+        });
     });
-  });
 
-  /* ---------- go ---------- */
-  load();
-  lastA = S.a; lastB = S.b;
-  render();
-  fitNames();
-  setTimeout(fitNames, 60);                                   // after first layout
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNames);
-  acquireWake();
-  showVoiceStatus();
-  if (voiceBlocker()) {
-    $("mic").classList.add("dead");
-    caption(voiceBlocker(), true, true);
-  } else if (embedded) {
-    caption("Open this page in its own tab to use voice — tap a side to score meanwhile", true);
-  }
-})();
+    /* ---------- go ---------- */
+    load();
+    lastA = S.a;
+    lastB = S.b;
+    render();
+    fitNames();
+    setTimeout(fitNames, 60); // after first layout
+    if (document.fonts && document.fonts.ready)
+      document.fonts.ready.then(fitNames);
+    acquireWake();
+    showVoiceStatus();
+    if (!S.seen) showIntro();
+    if (voiceBlocker()) {
+      $("mic").classList.add("dead");
+      caption(voiceBlocker(), true, true);
+    } else if (embedded) {
+      caption(
+        "Open this page in its own tab to use voice — tap a side to score meanwhile",
+        true,
+      );
+    }
+  })();
 </script>
