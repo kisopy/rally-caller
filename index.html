@@ -1,0 +1,1405 @@
+<title>Rally Caller</title>
+
+<style>
+  /* ---------- tokens ---------- */
+  :root {
+    --court-a:        #0C4A8F;
+    --court-a-lift:   #1668BE;
+    --court-b:        #0E7A46;
+    --court-b-lift:   #17A85F;
+
+    --line:           #EEF2EE;
+    --surround:       #08110F;
+    --surround-lift:  #0E1B18;
+    --cork:           #D6A55C;
+    /* signal colours — kept separate from the accent and from the court greens */
+    --live:           #4ED08A;
+    --pending:        #E8B45C;
+    --ink:            #E9EFEA;
+    --ink-dim:        rgba(233, 239, 234, 0.58);
+    --ink-faint:      rgba(233, 239, 234, 0.30);
+
+    --f-display: "DIN Condensed", "DIN Alternate", "Oswald", "Roboto Condensed", "Arial Narrow", sans-serif;
+    --f-ui: "Avenir Next", "Avenir", "Futura", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    --bar-h: 4.75rem;
+    --pad-t: env(safe-area-inset-top, 0px);
+    --pad-b: env(safe-area-inset-bottom, 0px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--surround);
+    color: var(--ink);
+    font-family: var(--f-ui);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .app {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-rows: 1fr var(--bar-h);
+    background: var(--surround);
+  }
+
+  /* ---------- court ---------- */
+  .court {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .side {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+    justify-items: center;
+    gap: 0;
+    padding: calc(var(--pad-t) + 3.25rem) 0.5rem 1.25rem;
+    border: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--line);
+    cursor: pointer;
+    appearance: none;
+    overflow: hidden;
+    transition: filter 140ms ease;
+  }
+  .side--a { background: linear-gradient(170deg, var(--court-a-lift) -30%, var(--court-a) 55%, #08325F 130%); }
+  .side--b { background: linear-gradient(170deg, var(--court-b-lift) -30%, var(--court-b) 55%, #08512D 130%); }
+  .side:active { filter: brightness(1.14); }
+  .side:focus-visible { outline: 3px solid var(--line); outline-offset: -6px; }
+
+  /* court markings, seen from above; net is the shared inner edge */
+  .lines { position: absolute; inset: 0; pointer-events: none; }
+  .side--b .lines { transform: scaleX(-1); }
+  .lines .box {
+    position: absolute;
+    top: 7%; bottom: 7%; left: 5%; right: 0;
+    border: 2px solid rgba(255,255,255,0.14);
+    border-right: 0;
+  }
+  .lines i { position: absolute; background: rgba(255,255,255,0.13); }
+  .lines .short  { top: 7%; bottom: 7%; right: 30%; width: 2px; }
+  .lines .centre { top: 50%; left: 5%; right: 30%; height: 2px; }
+  .lines .long   { top: 7%; bottom: 7%; left: 13%; width: 2px; }
+
+  .team {
+    position: relative;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.82);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .score {
+    position: relative;
+    font-family: var(--f-display);
+    font-size: min(33vh, 29vw);
+    line-height: 0.78;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    text-shadow: 0 0.06em 0.3em rgba(0,0,0,0.28);
+    will-change: transform;
+  }
+  .score.pop { animation: pop 300ms cubic-bezier(.2,1.5,.4,1); }
+  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.13); } 100% { transform: scale(1); } }
+
+  .foot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 1.5rem;
+  }
+  .pips { display: flex; gap: 0.3125rem; }
+  .pips b {
+    width: 0.5rem; height: 0.5rem; border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.35);
+  }
+  .pips b.won { background: var(--line); box-shadow: none; }
+
+  .shuttle { width: 1.375rem; height: 1.375rem; opacity: 0; transition: opacity 180ms ease; }
+  .shuttle.on { opacity: 1; }
+
+  /* net */
+  .net {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 4px;
+    margin-left: -2px;
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.5) 0 2px, rgba(255,255,255,0.16) 2px 5px);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.22), 0 0 18px rgba(0,0,0,0.3);
+    pointer-events: none;
+  }
+  .net::before, .net::after {
+    content: "";
+    position: absolute;
+    left: -1px; right: -1px;
+    height: 1.75rem;
+    background: var(--line);
+  }
+  .net::before { top: 0; }
+  .net::after { bottom: 0; }
+
+  /* status chip on the net */
+  .status {
+    position: absolute;
+    top: calc(var(--pad-t) + 0.625rem);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: calc(100% - 1.5rem);
+    padding: 0.4375rem 0.875rem;
+    border-radius: 999px;
+    background: rgba(8, 17, 15, 0.82);
+    box-shadow: 0 0 0 1px rgba(238,242,238,0.16), 0 6px 22px rgba(0,0,0,0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .status .hot { color: var(--cork); }
+
+  /* game / match overlay */
+  .over {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: none;
+    place-content: center;
+    justify-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: rgba(8, 17, 15, 0.80);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    text-align: center;
+  }
+  .over.on { display: grid; }
+  .over .kind {
+    font-family: var(--f-display);
+    font-size: clamp(3.5rem, 17vw, 9rem);
+    line-height: 0.82;
+    letter-spacing: 0.02em;
+    color: var(--line);
+  }
+  .over .who {
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cork);
+  }
+  .over .tally {
+    font-family: var(--f-display);
+    font-size: 1.75rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- controls ---------- */
+  .bar {
+    position: relative;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1rem calc(var(--pad-b));
+    background: var(--surround);
+    box-shadow: 0 -1px 0 rgba(238,242,238,0.10);
+  }
+
+  .heard {
+    position: absolute;
+    bottom: calc(100% + 0.625rem);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    max-width: min(88vw, 26rem);
+    padding: 0.375rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(8,17,15,0.86);
+    box-shadow: 0 0 0 1px rgba(238,242,238,0.14);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    pointer-events: none;
+  }
+  .heard.on { opacity: 1; }
+  .heard.warn { color: #F5C77E; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4375rem;
+    height: 2.625rem;
+    padding: 0 0.9375rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--surround-lift);
+    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.16);
+    color: var(--ink);
+    font-family: var(--f-ui);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 140ms ease, opacity 140ms ease;
+  }
+  .btn:active { background: #172926; }
+  .btn:disabled { opacity: 0.32; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--cork); outline-offset: 2px; }
+  .btn svg { width: 1rem; height: 1rem; flex: none; }
+  .bar .left { justify-self: start; }
+  .bar .right { justify-self: end; }
+
+  .mic {
+    --sig: rgba(238,242,238,0.22);
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 0;
+    border-radius: 50%;
+    background: var(--surround-lift);
+    box-shadow: inset 0 0 0 1.5px var(--sig);
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease,
+                transform 160ms cubic-bezier(.2,1.4,.4,1);
+  }
+  .mic svg { width: 1.5rem; height: 1.5rem; }
+  .mic:focus-visible { outline: 2px solid var(--cork); outline-offset: 3px; }
+
+  /* waiting on the browser to open the audio stream */
+  .mic.starting { --sig: var(--pending); }
+  /* the mic is genuinely capturing */
+  .mic.live, .mic.hearing { --sig: var(--live); }
+
+  .mic.on {
+    background: var(--sig);
+    color: #06180F;
+    box-shadow: inset 0 0 0 1.5px var(--sig);
+  }
+  .mic.on::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--sig);
+    animation: ring 1.9s ease-out infinite;
+  }
+  /* sound is arriving right now */
+  .mic.hearing { transform: scale(1.07); }
+  .mic.hearing::after { animation-duration: 0.85s; }
+
+  @keyframes ring {
+    0%   { transform: scale(0.86); opacity: 0.9; }
+    100% { transform: scale(1.32); opacity: 0; }
+  }
+  .mic.dead { opacity: 0.34; }
+
+  /* live input meter, used by the mic test in Setup */
+  .meter {
+    height: 0.5rem;
+    margin-top: 0.5rem;
+    border-radius: 999px;
+    background: rgba(238,242,238,0.10);
+    overflow: hidden;
+  }
+  .meter i {
+    display: block;
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--live), #8FE3B6);
+    transition: width 70ms linear;
+  }
+
+  /* ---------- settings sheet ---------- */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 8;
+    background: rgba(4, 9, 8, 0.62);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: fixed;
+    z-index: 9;
+    left: 0; right: 0; bottom: 0;
+    max-height: 86dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1.25rem 1.25rem calc(1.5rem + var(--pad-b));
+    border-radius: 1.25rem 1.25rem 0 0;
+    background: var(--surround-lift);
+    box-shadow: 0 -1px 0 rgba(238,242,238,0.14), 0 -24px 60px rgba(0,0,0,0.5);
+    transform: translateY(101%);
+    transition: transform 260ms cubic-bezier(.32,.72,0,1);
+  }
+  .sheet.on { transform: translateY(0); }
+  .sheet .grip {
+    width: 2.25rem; height: 0.25rem;
+    margin: -0.375rem auto 1.125rem;
+    border-radius: 999px;
+    background: rgba(238,242,238,0.22);
+  }
+
+  .field { display: grid; gap: 0.5rem; margin-bottom: 1.375rem; }
+  .field > label, .lbl {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .names { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+  .names input {
+    width: 100%;
+    padding: 0.6875rem 0.75rem;
+    border: 0;
+    border-radius: 0.625rem;
+    background: rgba(238,242,238,0.07);
+    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.14);
+    color: var(--ink);
+    font-family: var(--f-ui);
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+  .names input:focus { outline: 2px solid var(--cork); outline-offset: 1px; }
+  .names .a { box-shadow: inset 0 0 0 1px rgba(238,242,238,0.14), inset 3px 0 0 var(--court-a-lift); }
+  .names .b { box-shadow: inset 0 0 0 1px rgba(238,242,238,0.14), inset 3px 0 0 var(--court-b-lift); }
+
+  .seg { display: flex; gap: 0.375rem; }
+  .seg button {
+    flex: 1;
+    padding: 0.625rem 0.25rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: rgba(238,242,238,0.06);
+    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.12);
+    color: var(--ink-dim);
+    font-family: var(--f-ui);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] {
+    background: var(--line);
+    box-shadow: none;
+    color: #0B1513;
+  }
+  .seg button:focus-visible { outline: 2px solid var(--cork); outline-offset: 2px; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid rgba(238,242,238,0.10);
+  }
+  .row .txt { display: grid; gap: 0.1875rem; }
+  .row .txt strong { font-size: 0.9375rem; font-weight: 600; letter-spacing: 0.01em; }
+  .row .txt span { font-size: 0.75rem; color: var(--ink-faint); letter-spacing: 0.01em; }
+
+  .sw {
+    flex: none;
+    width: 3.125rem; height: 1.875rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(238,242,238,0.16);
+    cursor: pointer;
+    transition: background 180ms ease;
+  }
+  .sw::after {
+    content: "";
+    display: block;
+    width: 1.5rem; height: 1.5rem;
+    margin-left: 0.1875rem;
+    border-radius: 50%;
+    background: var(--line);
+    transition: transform 180ms cubic-bezier(.32,.72,0,1);
+  }
+  .sw[aria-pressed="true"] { background: var(--cork); }
+  .sw[aria-pressed="true"]::after { transform: translateX(1.25rem); }
+  .sw:focus-visible { outline: 2px solid var(--cork); outline-offset: 2px; }
+
+  .vstat {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5625rem;
+    padding: 0.6875rem 0.75rem;
+    border-radius: 0.625rem;
+    background: rgba(238,242,238,0.06);
+    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.12);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+  .vstat b {
+    flex: none;
+    width: 0.5rem; height: 0.5rem;
+    margin-top: 0.34rem;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+  .vstat.ok b   { background: #4ED08A; }
+  .vstat.warn b { background: #F5C77E; }
+  .vstat.bad b  { background: #F2A0A0; }
+
+  .cmds {
+    margin: 0.25rem 0 1.375rem;
+    display: grid;
+    gap: 0.4375rem;
+    font-size: 0.8125rem;
+    color: var(--ink-dim);
+  }
+  .cmds div { display: flex; gap: 0.625rem; align-items: baseline; }
+  .cmds kbd {
+    flex: none;
+    min-width: 7.25rem;
+    padding: 0.1875rem 0.4375rem;
+    border-radius: 0.3125rem;
+    background: rgba(238,242,238,0.08);
+    box-shadow: inset 0 0 0 1px rgba(238,242,238,0.12);
+    font-family: var(--f-ui);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+
+  .wide { width: 100%; height: 3rem; }
+  .danger { color: #F2A0A0; box-shadow: inset 0 0 0 1px rgba(242,160,160,0.32); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  /* wider screens: cap the numerals so they stay a scoreboard, not wallpaper */
+  @media (min-width: 60rem) {
+    .score { font-size: min(30vh, 16vw); }
+    .team { font-size: 1rem; }
+  }
+</style>
+
+<div class="app">
+  <div class="court">
+    <button class="side side--a" id="sideA" aria-label="Add a point for Team A">
+      <span class="lines" aria-hidden="true">
+        <i class="box"></i><i class="short"></i><i class="centre"></i><i class="long"></i>
+      </span>
+      <span class="team" id="nameA">Team A</span>
+      <span class="score" id="scoreA">0</span>
+      <span class="foot">
+        <svg class="shuttle" id="servA" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 3h12l-2.4 11.5H8.4L6 3Z" fill="currentColor" opacity=".55"/>
+          <path d="M10.2 3 9.4 14.5M13.8 3l.8 11.5" stroke="#08110F" stroke-width="1.1" opacity=".5"/>
+          <circle cx="12" cy="18" r="3.6" fill="currentColor"/>
+        </svg>
+        <span class="pips" id="pipsA"></span>
+      </span>
+    </button>
+
+    <button class="side side--b" id="sideB" aria-label="Add a point for Team B">
+      <span class="lines" aria-hidden="true">
+        <i class="box"></i><i class="short"></i><i class="centre"></i><i class="long"></i>
+      </span>
+      <span class="team" id="nameB">Team B</span>
+      <span class="score" id="scoreB">0</span>
+      <span class="foot">
+        <svg class="shuttle" id="servB" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 3h12l-2.4 11.5H8.4L6 3Z" fill="currentColor" opacity=".55"/>
+          <path d="M10.2 3 9.4 14.5M13.8 3l.8 11.5" stroke="#08110F" stroke-width="1.1" opacity=".5"/>
+          <circle cx="12" cy="18" r="3.6" fill="currentColor"/>
+        </svg>
+        <span class="pips" id="pipsB"></span>
+      </span>
+    </button>
+
+    <div class="net" aria-hidden="true"></div>
+    <div class="status" id="status" role="status" aria-live="polite">Game 1</div>
+
+    <div class="over" id="over">
+      <div class="kind" id="overKind">Game</div>
+      <div class="who" id="overWho">Team A</div>
+      <div class="tally" id="overTally">21 – 18</div>
+      <button class="btn" id="overNext" style="height:3rem;padding:0 1.5rem">Next game</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="heard" id="heard"></div>
+
+    <button class="btn left" id="undo" disabled aria-label="Undo last point">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 8h12a5 5 0 0 1 0 10H9"/><path d="m7 4-4 4 4 4"/>
+      </svg>
+      Undo
+    </button>
+
+    <button class="mic" id="mic" aria-pressed="false" aria-label="Start listening">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="2" width="6" height="11" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/>
+      </svg>
+    </button>
+
+    <button class="btn right" id="menu" aria-label="Open settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+      Setup
+    </button>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Match setup">
+  <div class="grip"></div>
+
+  <div class="field">
+    <span class="lbl">Team names</span>
+    <div class="names">
+      <input class="a" id="inA" value="Team A" maxlength="14" autocomplete="off" spellcheck="false" aria-label="Team A name">
+      <input class="b" id="inB" value="Team B" maxlength="14" autocomplete="off" spellcheck="false" aria-label="Team B name">
+    </div>
+  </div>
+
+  <div class="field">
+    <span class="lbl">Points per game</span>
+    <div class="seg" id="segTarget">
+      <button data-v="11">11</button><button data-v="15">15</button><button data-v="21">21</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <span class="lbl">Match length</span>
+    <div class="seg" id="segBest">
+      <button data-v="1">Single game</button><button data-v="3">Best of 3</button><button data-v="5">Best of 5</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <span class="lbl">Voice</span>
+    <div class="vstat" id="vstat"><b id="vdot"></b><span id="vtext">Checking…</span></div>
+    <button class="btn wide" id="ownTab" hidden>Open in its own tab</button>
+    <button class="btn wide" id="micTest">Test the microphone</button>
+    <div class="meter" id="meter" hidden><i id="meterFill"></i></div>
+  </div>
+
+  <span class="lbl">Voice commands</span>
+  <div class="cmds">
+    <div><kbd>“Team A”</kbd><span>Point to the blue side — also “A”, “point A”, “alpha”</span></div>
+    <div><kbd>“Team B”</kbd><span>Point to the green side — also “B”, “point B”, “bravo”</span></div>
+    <div><kbd>“Undo”</kbd><span>Take back the last point — also “oops”</span></div>
+    <div><kbd>“Next game”</kbd><span>Start the next game once one is won</span></div>
+    <div><kbd>“Reset game”</kbd><span>Put the current game back to 0 – 0</span></div>
+  </div>
+
+  <div class="row">
+    <span class="txt"><strong>Say the score aloud</strong><span>Reads the running score after each point</span></span>
+    <button class="sw" id="swSpeak" aria-pressed="false" aria-label="Say the score aloud"></button>
+  </div>
+  <div class="row">
+    <span class="txt"><strong>Point beep</strong><span>A short tone confirms who scored</span></span>
+    <button class="sw" id="swBeep" aria-pressed="true" aria-label="Point beep"></button>
+  </div>
+  <div class="row" style="margin-bottom:1.25rem">
+    <span class="txt"><strong>Keep the screen on</strong><span>Stops the phone sleeping mid-rally</span></span>
+    <button class="sw" id="swWake" aria-pressed="true" aria-label="Keep the screen on"></button>
+  </div>
+
+  <button class="btn wide danger" id="newMatch" style="margin-bottom:0.625rem">Start a new match</button>
+  <button class="btn wide" id="closeSheet">Done</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- viewport: the artifact host owns <head>, so make sure the
+     phone gets a device-width viewport and safe-area insets ---------- */
+  var vp = document.querySelector('meta[name="viewport"]');
+  if (!vp) {
+    vp = document.createElement("meta");
+    vp.name = "viewport";
+    document.head.appendChild(vp);
+    vp.content = "width=device-width, initial-scale=1, viewport-fit=cover";
+  } else if (vp.content.indexOf("viewport-fit") === -1) {
+    vp.content = vp.content + ", viewport-fit=cover";
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var CAPS = { 11: 15, 15: 21, 21: 30 };
+  var STORE = "rally-caller-v1";
+
+  var S = {
+    a: 0, b: 0,
+    gamesA: 0, gamesB: 0,
+    game: 1,
+    server: null,      // 'a' | 'b' | null before the first point
+    won: null,         // team that just won a game
+    matchWon: null,    // team that won the match
+    names: { a: "Team A", b: "Team B" },
+    target: 21,
+    bestOf: 3,
+    speak: false,
+    beep: true,
+    wake: true
+  };
+
+  var history = [];
+  var captionTimer = null;
+
+  /* ---------- persistence ---------- */
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE);
+      if (!raw) return;
+      var v = JSON.parse(raw);
+      if (v && typeof v === "object") {
+        Object.keys(S).forEach(function (k) {
+          if (v[k] !== undefined && v[k] !== null) S[k] = v[k];
+        });
+        if (!S.names || !S.names.a) S.names = { a: "Team A", b: "Team B" };
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- rules ---------- */
+  function cap() { return CAPS[S.target] || S.target + 9; }
+  function needed() { return Math.ceil(S.bestOf / 2); }
+  function isWin(mine, theirs) {
+    return (mine >= S.target && mine - theirs >= 2) || mine >= cap();
+  }
+
+  function point(team) {
+    if (S.won || S.matchWon) return;
+    pushHistory();
+
+    S[team] += 1;
+    S.server = team;
+
+    var mine = S[team];
+    var theirs = S[team === "a" ? "b" : "a"];
+
+    if (isWin(mine, theirs)) {
+      S.won = team;
+      if (team === "a") S.gamesA += 1; else S.gamesB += 1;
+      var g = team === "a" ? S.gamesA : S.gamesB;
+      if (g >= needed()) S.matchWon = team;
+    }
+
+    render();
+    beep(team);
+    if (S.won) announceGame(team); else announceScore(team);
+    save();
+  }
+
+  function nextGame() {
+    if (!S.won || S.matchWon) return;
+    pushHistory();
+    S.server = S.won;
+    S.a = 0; S.b = 0;
+    S.game += 1;
+    S.won = null;
+    render();
+    save();
+  }
+
+  function resetGame() {
+    pushHistory();
+    S.a = 0; S.b = 0; S.won = null; S.matchWon = null;
+    render();
+    save();
+  }
+
+  function newMatch() {
+    pushHistory();
+    S.a = 0; S.b = 0; S.gamesA = 0; S.gamesB = 0;
+    S.game = 1; S.server = null; S.won = null; S.matchWon = null;
+    render();
+    save();
+  }
+
+  function pushHistory() {
+    history.push(JSON.stringify({
+      a: S.a, b: S.b, gamesA: S.gamesA, gamesB: S.gamesB,
+      game: S.game, server: S.server, won: S.won, matchWon: S.matchWon
+    }));
+    if (history.length > 120) history.shift();
+  }
+
+  function undo() {
+    var prev = history.pop();
+    if (!prev) return;
+    var v = JSON.parse(prev);
+    Object.keys(v).forEach(function (k) { S[k] = v[k]; });
+    render();
+    save();
+  }
+
+  /* ---------- sound ---------- */
+  var audio = null;
+  function unlockAudio() {
+    try {
+      if (!audio) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audio = new Ctx();
+      }
+      if (audio && audio.state === "suspended") audio.resume();
+    } catch (e) {}
+  }
+  function beep(team) {
+    if (!S.beep) return;
+    unlockAudio();
+    if (!audio) return;
+    try {
+      var t = audio.currentTime;
+      var osc = audio.createOscillator();
+      var gain = audio.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(team === "a" ? 523.25 : 784.0, t);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      osc.connect(gain).connect(audio.destination);
+      osc.start(t);
+      osc.stop(t + 0.18);
+    } catch (e) {}
+  }
+
+  /* ---------- speech out ---------- */
+  var speakGuardUntil = 0;
+  function say(text) {
+    if (!S.speak || !window.speechSynthesis) return;
+    try {
+      speakGuardUntil = Date.now() + 6000;   // hard ceiling in case onend never fires
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.05;
+      u.volume = 1;
+      u.onend = u.onerror = function () { speakGuardUntil = Date.now() + 450; };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    } catch (e) { speakGuardUntil = 0; }
+  }
+  function announceScore(team) {
+    // badminton convention: the serving side's score is called first
+    var mine = S[team], theirs = S[team === "a" ? "b" : "a"];
+    say(mine === theirs ? mine + " all" : mine + " " + theirs);
+  }
+  function announceGame(team) {
+    say((S.matchWon ? "Match. " : "Game. ") + S.names[team]);
+  }
+
+  /* ---------- render ---------- */
+  var lastA = 0, lastB = 0;
+
+  function pipsHtml(won) {
+    if (S.bestOf < 2) return "";
+    var out = "";
+    for (var i = 0; i < needed(); i++) out += '<b class="' + (i < won ? "won" : "") + '"></b>';
+    return out;
+  }
+
+  function statusText() {
+    if (S.matchWon) return "Match &middot; " + esc(S.names[S.matchWon].toUpperCase());
+    if (S.won) return "Game " + S.game + " &middot; " + esc(S.names[S.won].toUpperCase());
+
+    var c = cap();
+    if (S.a === c - 1 && S.b === c - 1) return '<span class="hot">Sudden death</span>';
+
+    var aPt = isWin(S.a + 1, S.b);
+    var bPt = isWin(S.b + 1, S.a);
+    if (aPt || bPt) {
+      var who = aPt ? "a" : "b";
+      var g = who === "a" ? S.gamesA : S.gamesB;
+      var kind = (g + 1 >= needed()) ? "Match point" : "Game point";
+      return '<span class="hot">' + kind + " &middot; " + esc(S.names[who].toUpperCase()) + "</span>";
+    }
+
+    if (S.a >= S.target - 1 && S.a === S.b) return '<span class="hot">Deuce</span>';
+    return S.bestOf > 1 ? "Game " + S.game : "Rally Caller";
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c];
+    });
+  }
+
+  function render() {
+    $("nameA").textContent = S.names.a;
+    $("nameB").textContent = S.names.b;
+    $("sideA").setAttribute("aria-label", "Add a point for " + S.names.a);
+    $("sideB").setAttribute("aria-label", "Add a point for " + S.names.b);
+
+    if (S.a !== lastA) pop($("scoreA"));
+    if (S.b !== lastB) pop($("scoreB"));
+    lastA = S.a; lastB = S.b;
+
+    $("scoreA").textContent = S.a;
+    $("scoreB").textContent = S.b;
+
+    $("servA").classList.toggle("on", S.server === "a" && !S.won);
+    $("servB").classList.toggle("on", S.server === "b" && !S.won);
+
+    $("pipsA").innerHTML = pipsHtml(S.gamesA);
+    $("pipsB").innerHTML = pipsHtml(S.gamesB);
+    $("status").innerHTML = statusText();
+
+    var over = $("over");
+    if (S.won || S.matchWon) {
+      var w = S.matchWon || S.won;
+      $("overKind").textContent = S.matchWon ? "Match" : "Game " + S.game;
+      $("overWho").textContent = S.names[w];
+      $("overTally").textContent = S.matchWon
+        ? S.gamesA + " – " + S.gamesB + " in games"
+        : S.a + " – " + S.b;
+      $("overNext").textContent = S.matchWon ? "New match" : "Next game";
+      over.classList.add("on");
+    } else {
+      over.classList.remove("on");
+    }
+
+    $("undo").disabled = history.length === 0;
+
+    $("inA").value = S.names.a;
+    $("inB").value = S.names.b;
+    seg($("segTarget"), S.target);
+    seg($("segBest"), S.bestOf);
+    $("swSpeak").setAttribute("aria-pressed", String(S.speak));
+    $("swBeep").setAttribute("aria-pressed", String(S.beep));
+    $("swWake").setAttribute("aria-pressed", String(S.wake));
+  }
+
+  function pop(el) {
+    el.classList.remove("pop");
+    void el.offsetWidth;
+    el.classList.add("pop");
+  }
+
+  function seg(box, val) {
+    [].forEach.call(box.children, function (b) {
+      b.setAttribute("aria-pressed", String(Number(b.dataset.v) === Number(val)));
+    });
+  }
+
+  /* ---------- voice in ---------- */
+  var TEAM = "(?:team|teams|tim|deem|dean|the team)";
+  var AW = "(?:a|ay|aye|eh|hey|hay|8|eight|ate|aid|alpha|able)";
+  var BW = "(?:b|be|bee|bea|p|pee|beat|beam|bravo|baker)";
+  // a bare word only scores when it is the whole utterance, so this set stays
+  // tight — "hey" or "be" on their own are too easy to say by accident
+  var AW_SOLO = "(?:a|ay|aye|8|eight|alpha)";
+  var BW_SOLO = "(?:b|bee|bea|bravo)";
+
+  function rules() {
+    var r = [
+      { cmd: "undo",  re: /\b(?:undo|oops|whoops|mistake|cancel that|scratch that|take that back|my bad)\b/g },
+      { cmd: "next",  re: /\b(?:next game|new game|next set)\b/g },
+      { cmd: "reset", re: /\b(?:reset(?: the)?(?: game| score)?|start over|zero zero|love all)\b/g },
+      { cmd: "a", re: new RegExp("\\b(?:" + TEAM + "\\s+" + AW + "|point\\s+(?:for\\s+|to\\s+)?" + AW + "|" + AW + "\\s+(?:point|scores?)|" + AW + "\\s+" + TEAM + ")\\b", "g") },
+      { cmd: "b", re: new RegExp("\\b(?:" + TEAM + "\\s+" + BW + "|point\\s+(?:for\\s+|to\\s+)?" + BW + "|" + BW + "\\s+(?:point|scores?)|" + BW + "\\s+" + TEAM + ")\\b", "g") }
+    ];
+    // custom team names, when they are not the defaults
+    ["a", "b"].forEach(function (k) {
+      var n = String(S.names[k] || "").toLowerCase().trim();
+      if (!n || /^team [ab]$/.test(n) || n.length < 2) return;
+      var safe = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      r.push({ cmd: k, re: new RegExp("\\b" + safe + "\\b", "g") });
+    });
+    return r;
+  }
+
+  function parse(text) {
+    var t = String(text).toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    if (!t) return [];
+
+    // a bare "a" / "b" only counts when it is the whole utterance
+    if (new RegExp("^" + AW_SOLO + "$").test(t)) return ["a"];
+    if (new RegExp("^" + BW_SOLO + "$").test(t)) return ["b"];
+
+    var hits = [];
+    rules().forEach(function (rule) {
+      rule.re.lastIndex = 0;
+      var m;
+      while ((m = rule.re.exec(t)) !== null) {
+        hits.push({ at: m.index, end: m.index + m[0].length, cmd: rule.cmd });
+        if (m[0].length === 0) rule.re.lastIndex++;
+      }
+    });
+
+    hits.sort(function (x, y) { return x.at - y.at || y.end - x.end; });
+
+    var out = [], edge = -1;
+    hits.forEach(function (h) {
+      if (h.at < edge) return;          // drop overlaps so "team a point" scores once
+      edge = h.end;
+      out.push(h.cmd);
+    });
+    return out;
+  }
+
+  function run(cmds) {
+    cmds.forEach(function (c) {
+      if (c === "a" || c === "b") {
+        if (S.won || S.matchWon) return;
+        point(c);
+      } else if (c === "undo") {
+        undo();
+      } else if (c === "next") {
+        if (S.matchWon) newMatch(); else nextGame();
+      } else if (c === "reset") {
+        resetGame();
+      }
+    });
+  }
+
+  function caption(text, warn, sticky) {
+    var el = $("heard");
+    el.textContent = text;
+    el.classList.toggle("warn", !!warn);
+    el.classList.add("on");
+    clearTimeout(captionTimer);
+    if (sticky) return;
+    captionTimer = setTimeout(function () { el.classList.remove("on"); }, warn ? 6000 : 2600);
+  }
+
+  /* ---------- where are we running? ---------- */
+  var UA = navigator.userAgent;
+  var embedded = (function () {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  })();
+  var iOS = /iP(hone|ad|od)/.test(UA) ||
+            (/Mac/.test(navigator.platform || "") && navigator.maxTouchPoints > 1);
+  var iOSNonSafari = iOS && /CriOS|FxiOS|EdgiOS|OPiOS/.test(UA);
+  var isFirefox = /Firefox/.test(UA);
+
+  // Why can't this browser listen? Returns null when it can.
+  function voiceBlocker() {
+    if (window.SpeechRecognition || window.webkitSpeechRecognition) return null;
+    if (iOSNonSafari) {
+      return "On iPhone, Apple only gives the speech API to Safari. Open this page in Safari — " +
+             "or just tap a side to score.";
+    }
+    if (isFirefox) {
+      return "Firefox has no speech recognition. Chrome, Edge or Safari will listen — " +
+             "or just tap a side to score.";
+    }
+    return "This browser has no speech recognition. Chrome, Edge or Safari will listen — " +
+           "or just tap a side to score.";
+  }
+
+  // Called after the browser refuses the mic, to say which of the two reasons it was.
+  function explainRefusal() {
+    if (embedded) {
+      caption("The preview frame won't pass the mic through. Open this page in its own tab, " +
+              "then tap the mic again.", true, true);
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      caption("Microphone blocked for this page. Allow it in the browser's site settings, " +
+              "then tap the mic again.", true, true);
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      // Mic itself is fine, so it is speech recognition specifically that was refused.
+      caption("This page can use the mic, but speech recognition was refused. Check the site " +
+              "permissions, then tap the mic again.", true, true);
+    }).catch(function () {
+      caption("Microphone blocked for this page. Click the permission icon in the address bar, " +
+              "allow the microphone, then tap the mic again.", true, true);
+    });
+  }
+
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, want = false, restartAt = 0, blocked = false;
+
+  function makeRec() {
+    var r = new SR();
+    r.continuous = true;
+    r.interimResults = true;
+    r.maxAlternatives = 3;
+    r.lang = (navigator.language && /^en/i.test(navigator.language)) ? navigator.language : "en-GB";
+
+    // Lifecycle events give us a truthful mic state without opening a second
+    // audio stream: audiostart means the browser really opened the mic,
+    // soundstart/speechstart mean it is picking something up right now.
+    r.onstart = function () { micState("starting"); };
+    r.onaudiostart = function () { micState("live"); };
+    r.onsoundstart = function () { hearing(); };
+    r.onspeechstart = function () { hearing(); };
+    r.onspeechend = function () { micState("live"); };
+    r.onsoundend = function () { micState("live"); };
+    r.onaudioend = function () { micState("starting"); };
+
+    r.onresult = function (e) {
+      hearing();   // fallback for browsers that skip the sound events
+      if (Date.now() < speakGuardUntil) return;   // don't hear our own announcement
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var res = e.results[i];
+        if (!res.isFinal) {
+          if (res[0] && res[0].transcript.trim()) caption("“" + res[0].transcript.trim() + "”");
+          continue;
+        }
+        var cmds = [], heardText = "";
+        for (var k = 0; k < res.length; k++) {
+          var txt = res[k].transcript.trim();
+          if (!txt) continue;
+          if (!heardText) heardText = txt;
+          var got = parse(txt);
+          if (got.length) { cmds = got; heardText = txt; break; }
+        }
+        if (heardText) caption("“" + heardText + "”" + (cmds.length ? "" : "  ·  no command"));
+        if (cmds.length) run(cmds);
+      }
+    };
+
+    r.onerror = function (e) {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        blocked = true;
+        want = false;
+        micState("off");
+        explainRefusal();
+      } else if (e.error === "audio-capture") {
+        want = false;
+        micState("off");
+        caption("No microphone available on this device", true);
+      }
+      // no-speech / aborted / network fall through to onend, which restarts
+    };
+
+    r.onend = function () {
+      micState(want ? "starting" : "off");
+      if (!want) return;
+      var wait = Math.max(0, 350 - (Date.now() - restartAt));
+      setTimeout(start, wait);
+    };
+
+    return r;
+  }
+
+  function start() {
+    if (!SR || !want) return;
+    if (!rec) rec = makeRec();
+    restartAt = Date.now();
+    try { rec.start(); }
+    catch (e) { setTimeout(function () { if (want) { try { rec.start(); } catch (e2) {} } }, 500); }
+  }
+
+  /* off = not listening, starting = stream not open yet, live = mic captured,
+     hearing = sound arriving this moment */
+  var hearTimer = null;
+
+  function micState(state) {
+    var m = $("mic");
+    m.classList.remove("starting", "live", "hearing");
+    m.classList.toggle("on", state !== "off");
+    if (state !== "off") m.classList.add(state === "hearing" ? "live" : state);
+    if (state === "hearing") m.classList.add("live", "hearing");
+    m.setAttribute("aria-pressed", String(!!want));
+    m.setAttribute("aria-label",
+      state === "off" ? "Start listening"
+        : state === "starting" ? "Opening the microphone"
+        : "Listening — tap to stop");
+  }
+
+  function hearing() {
+    var m = $("mic");
+    m.classList.remove("starting");
+    m.classList.add("on", "live", "hearing");
+    clearTimeout(hearTimer);
+    hearTimer = setTimeout(function () { m.classList.remove("hearing"); }, 700);
+  }
+
+  function toggleMic() {
+    var why = voiceBlocker();
+    if (why) { caption(why, true, true); return; }
+    unlockAudio();
+    if (want) {
+      want = false;
+      try { rec && rec.stop(); } catch (e) {}
+      micState("off");
+      caption("Listening off");
+    } else {
+      want = true;
+      blocked = false;
+      start();
+      caption("Listening — call “Team A” or “Team B”");
+    }
+  }
+
+  /* ---------- screen wake lock ---------- */
+  var lock = null;
+  function acquireWake() {
+    if (!S.wake || !navigator.wakeLock) return;
+    navigator.wakeLock.request("screen").then(function (l) {
+      lock = l;
+      l.addEventListener("release", function () { lock = null; });
+    }).catch(function () {});
+  }
+  function releaseWake() {
+    if (lock) { try { lock.release(); } catch (e) {} lock = null; }
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") {
+      acquireWake();
+      if (want) start();
+    }
+  });
+
+  /* ---------- wiring ---------- */
+  $("sideA").addEventListener("click", function () { unlockAudio(); point("a"); });
+  $("sideB").addEventListener("click", function () { unlockAudio(); point("b"); });
+  $("undo").addEventListener("click", undo);
+  $("mic").addEventListener("click", toggleMic);
+
+  $("overNext").addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (S.matchWon) newMatch(); else nextGame();
+  });
+
+  var sheet = $("sheet"), scrim = $("scrim");
+  function openSheet() { sheet.classList.add("on"); scrim.classList.add("on"); }
+  function closeSheet() { sheet.classList.remove("on"); scrim.classList.remove("on"); }
+  $("menu").addEventListener("click", openSheet);
+  $("closeSheet").addEventListener("click", closeSheet);
+  scrim.addEventListener("click", closeSheet);
+
+  ["inA", "inB"].forEach(function (id) {
+    $(id).addEventListener("input", function () {
+      var k = id === "inA" ? "a" : "b";
+      S.names[k] = this.value.trim() || (k === "a" ? "Team A" : "Team B");
+      $(k === "a" ? "nameA" : "nameB").textContent = S.names[k];
+      save();
+    });
+    $(id).addEventListener("blur", render);
+  });
+
+  $("segTarget").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    S.target = Number(b.dataset.v);
+    // a score already past the new target can't stand — restart this game
+    if (S.a >= S.target || S.b >= S.target || S.won) { S.a = 0; S.b = 0; S.won = null; S.matchWon = null; }
+    render(); save();
+  });
+
+  $("segBest").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    S.bestOf = Number(b.dataset.v);
+    if (S.gamesA >= needed() || S.gamesB >= needed()) {
+      S.matchWon = S.gamesA > S.gamesB ? "a" : "b";
+    } else {
+      S.matchWon = null;
+    }
+    render(); save();
+  });
+
+  function sw(id, key, after) {
+    $(id).addEventListener("click", function () {
+      S[key] = !S[key];
+      this.setAttribute("aria-pressed", String(S[key]));
+      if (after) after();
+      save();
+    });
+  }
+  sw("swSpeak", "speak", function () { if (S.speak) say("Ready"); });
+  sw("swBeep", "beep", function () { if (S.beep) beep("a"); });
+  sw("swWake", "wake", function () { if (S.wake) acquireWake(); else releaseWake(); });
+
+  $("newMatch").addEventListener("click", function () {
+    newMatch();
+    closeSheet();
+  });
+
+  // keyboard, for when it's propped next to a laptop
+  document.addEventListener("keydown", function (e) {
+    if (e.target.tagName === "INPUT") return;
+    var k = e.key.toLowerCase();
+    if (k === "a") { point("a"); }
+    else if (k === "b") { point("b"); }
+    else if (k === "z" || k === "backspace") { e.preventDefault(); undo(); }
+    else if (k === "escape") { closeSheet(); }
+  });
+
+  /* ---------- voice status readout ---------- */
+  function browserName() {
+    if (iOSNonSafari) return "This browser on iPhone";
+    if (isFirefox) return "Firefox";
+    if (/Edg\//.test(UA)) return "Edge";
+    if (/Chrome\//.test(UA)) return "Chrome";
+    if (/Safari/.test(UA)) return "Safari";
+    return "This browser";
+  }
+
+  function showVoiceStatus() {
+    var box = $("vstat"), txt = $("vtext"), tab = $("ownTab");
+    var why = voiceBlocker();
+    box.classList.remove("ok", "warn", "bad");
+
+    if (why) {
+      box.classList.add("bad");
+      txt.textContent = why;
+      tab.hidden = !embedded;
+      return;
+    }
+    if (embedded) {
+      box.classList.add("warn");
+      txt.textContent = browserName() + " can listen, but this page is running inside a preview " +
+        "frame that blocks the microphone. Open it in its own tab and voice will work.";
+      tab.hidden = false;
+      return;
+    }
+    box.classList.add("ok");
+    txt.textContent = browserName() + " can listen. Tap the mic and allow the microphone when asked.";
+    tab.hidden = true;
+  }
+
+  $("ownTab").addEventListener("click", function () {
+    window.open(location.href, "_blank", "noopener");
+  });
+
+  /* ---------- microphone test ----------
+     Opens its own short-lived audio stream and draws the real input level, so
+     you can confirm the hardware is picking you up. Recognition is paused for
+     the duration — on iOS the two contend for the audio session. */
+  var testing = false;
+
+  $("micTest").addEventListener("click", function () {
+    if (testing) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      caption("This browser can't open the microphone for a test", true);
+      return;
+    }
+    testing = true;
+
+    var resume = want;
+    if (want) { want = false; try { rec && rec.stop(); } catch (e) {} micState("off"); }
+
+    var btn = this, meter = $("meter"), fill = $("meterFill");
+    btn.textContent = "Starting…";
+    meter.hidden = false;
+    unlockAudio();
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      var ctx = new Ctx();
+      var src = ctx.createMediaStreamSource(stream);
+      var an = ctx.createAnalyser();
+      an.fftSize = 1024;
+      src.connect(an);
+
+      var buf = new Uint8Array(an.fftSize);
+      var until = Date.now() + 8000;
+      var peak = 0;
+
+      btn.textContent = "Say something…";
+
+      (function draw() {
+        an.getByteTimeDomainData(buf);
+        var sum = 0;
+        for (var i = 0; i < buf.length; i++) {
+          var v = (buf[i] - 128) / 128;
+          sum += v * v;
+        }
+        var level = Math.min(1, Math.sqrt(sum / buf.length) * 4.5);
+        if (level > peak) peak = level;
+        fill.style.width = (level * 100).toFixed(1) + "%";
+
+        if (Date.now() < until) { requestAnimationFrame(draw); return; }
+
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        try { ctx.close(); } catch (e) {}
+        fill.style.width = "0%";
+        meter.hidden = true;
+        btn.textContent = peak > 0.06 ? "Microphone works — test again" : "Heard nothing — test again";
+        caption(peak > 0.06
+          ? "Microphone is picking you up"
+          : "The mic opened but no sound came through — check it isn't muted", peak <= 0.06);
+        testing = false;
+        if (resume) { want = true; blocked = false; start(); }
+      })();
+    }).catch(function () {
+      meter.hidden = true;
+      btn.textContent = "Test the microphone";
+      testing = false;
+      explainRefusal();
+      if (resume) { want = true; start(); }
+    });
+  });
+
+  /* ---------- go ---------- */
+  load();
+  lastA = S.a; lastB = S.b;
+  render();
+  acquireWake();
+  showVoiceStatus();
+  if (voiceBlocker()) {
+    $("mic").classList.add("dead");
+    caption(voiceBlocker(), true, true);
+  } else if (embedded) {
+    caption("Open this page in its own tab to use voice — tap a side to score meanwhile", true);
+  }
+})();
+</script>
