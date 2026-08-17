@@ -95,18 +95,20 @@
   .lines .centre { top: 50%; left: 5%; right: 30%; height: 2px; }
   .lines .long   { top: 7%; bottom: 7%; left: 13%; width: 2px; }
 
+  /* Size is set by fitName() in JS so the name fills its half of the court.
+     The clamp here is only the pre-measurement value. */
   .team {
     position: relative;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
+    max-width: 94%;
+    font-size: clamp(1.25rem, 8vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.82);
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    text-align: center;
+    overflow-wrap: break-word;
+    color: #FFFFFF;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.36);
   }
 
   .score {
@@ -530,7 +532,6 @@
   /* wider screens: cap the numerals so they stay a scoreboard, not wallpaper */
   @media (min-width: 60rem) {
     .score { font-size: min(30vh, 16vw); }
-    .team { font-size: 1rem; }
   }
 </style>
 
@@ -642,8 +643,8 @@
 
   <span class="lbl">Voice commands</span>
   <div class="cmds">
-    <div><kbd>“Team A”</kbd><span>Point to the blue side — also “A”, “point A”, “alpha”</span></div>
-    <div><kbd>“Team B”</kbd><span>Point to the green side — also “B”, “point B”, “bravo”</span></div>
+    <div><kbd id="cmdKa">“Team A”</kbd><span id="cmdDa">Point to the blue side — also “A”, “point A”, “alpha”</span></div>
+    <div><kbd id="cmdKb">“Team B”</kbd><span id="cmdDb">Point to the green side — also “B”, “point B”, “bravo”</span></div>
     <div><kbd>“Undo”</kbd><span>Take back the last point — also “oops”</span></div>
     <div><kbd>“Next game”</kbd><span>Start the next game once one is won</span></div>
     <div><kbd>“Reset game”</kbd><span>Put the current game back to 0 – 0</span></div>
@@ -886,10 +887,11 @@
   }
 
   function render() {
-    $("nameA").textContent = S.names.a;
-    $("nameB").textContent = S.names.b;
+    setName("nameA", S.names.a);
+    setName("nameB", S.names.b);
     $("sideA").setAttribute("aria-label", "Add a point for " + S.names.a);
     $("sideB").setAttribute("aria-label", "Add a point for " + S.names.b);
+    updateCmdHelp();
 
     if (S.a !== lastA) pop($("scoreA"));
     if (S.b !== lastB) pop($("scoreB"));
@@ -930,6 +932,64 @@
     $("swWake").setAttribute("aria-pressed", String(S.wake));
   }
 
+  function setName(id, text) {
+    $(id).textContent = text;
+    fitName(id);
+  }
+
+  /* Grow the name until it fills its half of the court. Measured rather than
+     guessed, so a short name gets genuinely large and a long one still fits. */
+  function fitName(id) {
+    var el = $(id), side = el.parentElement;
+    var w = side.clientWidth, h = side.clientHeight;
+    if (!w || !h) return;
+
+    var avail = w * 0.94;
+    var maxSize = Math.min(w * 0.34, h * 0.19, 128);   // stay below the score
+    var minSize = 15;
+
+    var prevMax = el.style.maxWidth;
+    el.style.maxWidth = "none";
+    el.style.whiteSpace = "nowrap";
+    el.style.fontSize = "100px";
+    var natural = el.scrollWidth || 1;
+
+    var size = Math.floor(100 * avail / natural);
+    if (size > maxSize) size = Math.floor(maxSize);
+    if (size < minSize) { size = minSize; el.style.whiteSpace = "normal"; }
+
+    el.style.fontSize = size + "px";
+    el.style.maxWidth = prevMax || "";
+  }
+
+  function fitNames() { fitName("nameA"); fitName("nameB"); }
+  window.addEventListener("resize", fitNames);
+  window.addEventListener("orientationchange", function () { setTimeout(fitNames, 250); });
+
+  // What you actually say to score for a side, given its current name.
+  function callPhrase(k) {
+    return "Team " + (usesLetter(k) ? k.toUpperCase() : S.names[k]);
+  }
+
+  // The command list mirrors whatever the teams are actually called.
+  function updateCmdHelp() {
+    [["a", "cmdKa", "cmdDa", "blue"], ["b", "cmdKb", "cmdDb", "green"]].forEach(function (row) {
+      var k = row[0], toks = nameTokens(k), named = toks.length > 0;
+      var letter = k.toUpperCase();
+      $(row[1]).textContent = named ? "“Team " + S.names[k] + "”" : "“Team " + letter + "”";
+
+      if (!named) {
+        $(row[2]).textContent = "Point to the " + row[3] + " side — also “" + letter + "”, “point " +
+          letter + "”, “" + (k === "a" ? "alpha" : "bravo") + "”";
+        return;
+      }
+      var ini = initials()[k];
+      var also = ["“" + S.names[k] + "”"];
+      if (ini) also.push("“Team " + ini.toUpperCase() + "”");
+      $(row[2]).textContent = "Point to the " + row[3] + " side — also " + also.join(", ");
+    });
+  }
+
   function pop(el) {
     el.classList.remove("pop");
     void el.offsetWidth;
@@ -951,22 +1011,132 @@
   var AW_SOLO = "(?:a|ay|aye|8|eight|alpha)";
   var BW_SOLO = "(?:b|bee|bea|bravo)";
 
+  // A team still on its default name is called by its letter. Once it has a real
+  // name, the letter is retired — two names for one side is just confusing.
+  function usesLetter(k) { return nameTokens(k).length === 0; }
+
   function rules() {
     var r = [
       { cmd: "undo",  re: /\b(?:undo|oops|whoops|mistake|cancel that|scratch that|take that back|my bad)\b/g },
       { cmd: "next",  re: /\b(?:next game|new game|next set)\b/g },
-      { cmd: "reset", re: /\b(?:reset(?: the)?(?: game| score)?|start over|zero zero|love all)\b/g },
-      { cmd: "a", re: new RegExp("\\b(?:" + TEAM + "\\s+" + AW + "|point\\s+(?:for\\s+|to\\s+)?" + AW + "|" + AW + "\\s+(?:point|scores?)|" + AW + "\\s+" + TEAM + ")\\b", "g") },
-      { cmd: "b", re: new RegExp("\\b(?:" + TEAM + "\\s+" + BW + "|point\\s+(?:for\\s+|to\\s+)?" + BW + "|" + BW + "\\s+(?:point|scores?)|" + BW + "\\s+" + TEAM + ")\\b", "g") }
+      { cmd: "reset", re: /\b(?:reset(?: the)?(?: game| score)?|start over|zero zero|love all)\b/g }
     ];
-    // custom team names, when they are not the defaults
+    if (usesLetter("a")) {
+      r.push({ cmd: "a", re: new RegExp("\\b(?:" + TEAM + "\\s+" + AW + "|point\\s+(?:for\\s+|to\\s+)?" + AW + "|" + AW + "\\s+(?:point|scores?)|" + AW + "\\s+" + TEAM + ")\\b", "g") });
+    }
+    if (usesLetter("b")) {
+      r.push({ cmd: "b", re: new RegExp("\\b(?:" + TEAM + "\\s+" + BW + "|point\\s+(?:for\\s+|to\\s+)?" + BW + "|" + BW + "\\s+(?:point|scores?)|" + BW + "\\s+" + TEAM + ")\\b", "g") });
+    }
+    // "Team V" / "point V", where V is the initial of a renamed team
+    var ini = initials();
     ["a", "b"].forEach(function (k) {
-      var n = String(S.names[k] || "").toLowerCase().trim();
-      if (!n || /^team [ab]$/.test(n) || n.length < 2) return;
-      var safe = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      r.push({ cmd: k, re: new RegExp("\\b" + safe + "\\b", "g") });
+      if (!ini[k]) return;
+      var alt = LETTER[ini[k]].join("|");
+      r.push({ cmd: k, re: new RegExp("\\b(?:team|point)\\s+(?:" + alt + ")\\b", "g") });
     });
+
     return r;
+  }
+
+  /* ---------- matching custom names by sound ----------
+     Speech-to-text almost never returns a name spelled the way it was typed:
+     "Irland" comes back as "Ireland" or "island". Comparing text exactly is
+     therefore useless for names, so we compare how they sound. */
+
+  function soundex(s) {
+    s = String(s).toUpperCase().replace(/[^A-Z]/g, "");
+    if (!s) return "";
+    var code = { B:1,F:1,P:1,V:1, C:2,G:2,J:2,K:2,Q:2,S:2,X:2,Z:2, D:3,T:3, L:4, M:5,N:5, R:6 };
+    var out = "", prev = code[s.charAt(0)] || 0;
+    for (var i = 1; i < s.length && out.length < 3; i++) {
+      var ch = s.charAt(i), c = code[ch] || 0;
+      if (c && c !== prev) out += c;
+      if (ch !== "H" && ch !== "W") prev = c;
+    }
+    return (s.charAt(0) + out + "000").slice(0, 4);
+  }
+
+  function lev(a, b) {
+    var m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    var prev = [], cur = [], i, j;
+    for (j = 0; j <= n; j++) prev[j] = j;
+    for (i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (j = 1; j <= n; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1,
+                          prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+      }
+      var t = prev; prev = cur; cur = t;
+    }
+    return prev[n];
+  }
+
+  // The words of a team's name that are worth listening for.
+  function nameTokens(k) {
+    var n = String(S.names[k] || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim();
+    if (!n || /^team\s+[ab]$/.test(n)) return [];
+    return n.replace(/^team\s+/, "").split(/\s+/).filter(function (w) {
+      return w.length >= 3 && w !== "team";
+    });
+  }
+
+  /* ---------- calling a team by its initial ----------
+     "Team V" for Vernon. Recognisers spell letters out inconsistently, so each
+     letter carries the forms it commonly comes back as. */
+  var LETTER = {
+    a: ["a","ay","aye","eh","hey","eight","8"],  b: ["b","be","bee","bea","p","pee"],
+    c: ["c","see","sea"],       d: ["d","dee"],          e: ["e","ee"],
+    f: ["f","ef","eff"],        g: ["g","gee","jee"],    h: ["h","aitch","haitch"],
+    i: ["i","eye","aye"],       j: ["j","jay","jae"],    k: ["k","kay","cay"],
+    l: ["l","el","ell"],        m: ["m","em"],           n: ["n","en"],
+    o: ["o","oh","owe"],        p: ["p","pee","pea"],    q: ["q","cue","queue"],
+    r: ["r","are","ar"],        s: ["s","es","ess"],     t: ["t","tee","tea"],
+    u: ["u","you","yew","ewe"], v: ["v","vee","we","ve"],w: ["w","double u","dub"],
+    x: ["x","ex","ecks"],       y: ["y","why","wye"],    z: ["z","zed","zee"]
+  };
+  // forms that are ordinary words — fine after "team", never on their own
+  var RISKY = {
+    a:1, i:1, o:1, we:1, you:1, are:1, see:1, sea:1, be:1, tea:1, cue:1, queue:1,
+    why:1, eye:1, ewe:1, owe:1, hey:1, eh:1, ay:1, pea:1, eight:1, 8:1, ess:1, en:1
+  };
+
+  function initialFor(k) {
+    var toks = nameTokens(k);
+    if (!toks.length) return null;
+    var ch = toks[0].charAt(0);
+    return /[a-z]/.test(ch) && LETTER[ch] ? ch : null;
+  }
+
+  // An initial only counts when nothing else already answers to that letter.
+  function initials() {
+    var ia = initialFor("a"), ib = initialFor("b");
+    if (ia && ib && ia === ib) { ia = null; ib = null; }
+    if (ia === "b" && usesLetter("b")) ia = null;   // "B" still means the other side
+    if (ib === "a" && usesLetter("a")) ib = null;
+    return { a: ia, b: ib };
+  }
+
+  // How closely a spoken word matches a team's name. Lower is better, null is no match.
+  function nameScore(word, k) {
+    var toks = nameTokens(k), best = null, i;
+    for (i = 0; i < toks.length; i++) {
+      var w = toks[i];
+      if (word === w) return 0;
+      // three-letter names are too easy to collide with ordinary speech
+      if (word.length < 4 || w.length < 4) continue;
+      var d = lev(word, w);
+      // Names are usually heard with the right opening sound, so a shared first
+      // letter earns extra tolerance. Without it we stay strict, which keeps
+      // ordinary words ("person" against "Vernon") from scoring points.
+      var maxLen = Math.max(w.length, word.length);
+      var sameHead = word.charAt(0) === w.charAt(0);
+      var tol = (maxLen >= 8 || (sameHead && maxLen >= 6)) ? 2 : 1;
+      if (d <= tol) best = best === null ? d : Math.min(best, d);
+      else if (soundex(word) === soundex(w)) best = best === null ? 1.5 : Math.min(best, 1.5);
+    }
+    return best;
   }
 
   function parse(text) {
@@ -974,8 +1144,15 @@
     if (!t) return [];
 
     // a bare "a" / "b" only counts when it is the whole utterance
-    if (new RegExp("^" + AW_SOLO + "$").test(t)) return ["a"];
-    if (new RegExp("^" + BW_SOLO + "$").test(t)) return ["b"];
+    if (usesLetter("a") && new RegExp("^" + AW_SOLO + "$").test(t)) return ["a"];
+    if (usesLetter("b") && new RegExp("^" + BW_SOLO + "$").test(t)) return ["b"];
+
+    // a lone initial, when it isn't also an everyday word
+    var solo = initials(), sk;
+    for (sk in solo) {
+      if (!solo[sk]) continue;
+      if (LETTER[solo[sk]].some(function (f) { return f === t && !RISKY[f]; })) return [sk];
+    }
 
     var hits = [];
     rules().forEach(function (rule) {
@@ -986,6 +1163,31 @@
         if (m[0].length === 0) rule.re.lastIndex++;
       }
     });
+
+    // now the spoken words, matched against the team names by sound.
+    // Neighbouring words that hit the same team are one name, not two points —
+    // "red dragons" must score once.
+    var wordRe = /[a-z0-9]+/g, w, ord = -1, run = null;
+    while ((w = wordRe.exec(t)) !== null) {
+      ord++;
+      if (w[0] === "team") continue;
+      var sa = nameScore(w[0], "a"), sb = nameScore(w[0], "b");
+      if (sa === null && sb === null) continue;
+      var pick;
+      if (sa !== null && sb !== null) {
+        if (sa === sb) continue;              // both names sound alike here — too risky to guess
+        pick = sa < sb ? "a" : "b";
+      } else {
+        pick = sa !== null ? "a" : "b";
+      }
+      if (run && run.cmd === pick && run.ord === ord - 1) {
+        run.end = w.index + w[0].length;      // same name continuing
+        run.ord = ord;
+        continue;
+      }
+      run = { at: w.index, end: w.index + w[0].length, cmd: pick, ord: ord };
+      hits.push(run);
+    }
 
     hits.sort(function (x, y) { return x.at - y.at || y.end - x.end; });
 
@@ -1184,7 +1386,7 @@
       want = true;
       blocked = false;
       start();
-      caption("Listening — call “Team A” or “Team B”");
+      caption("Listening — call “" + callPhrase("a") + "” or “" + callPhrase("b") + "”");
     }
   }
 
@@ -1229,7 +1431,8 @@
     $(id).addEventListener("input", function () {
       var k = id === "inA" ? "a" : "b";
       S.names[k] = this.value.trim() || (k === "a" ? "Team A" : "Team B");
-      $(k === "a" ? "nameA" : "nameB").textContent = S.names[k];
+      setName(k === "a" ? "nameA" : "nameB", S.names[k]);
+      updateCmdHelp();
       save();
     });
     $(id).addEventListener("blur", render);
@@ -1393,6 +1596,9 @@
   load();
   lastA = S.a; lastB = S.b;
   render();
+  fitNames();
+  setTimeout(fitNames, 60);                                   // after first layout
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNames);
   acquireWake();
   showVoiceStatus();
   if (voiceBlocker()) {
