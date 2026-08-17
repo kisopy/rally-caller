@@ -488,6 +488,61 @@
     opacity: 0.34;
   }
 
+  /* speaker toggle, sat beside the mic; the spacer keeps the mic dead centre */
+  .centre {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+  .spacer {
+    width: 2.5rem;
+    flex: none;
+  }
+
+  .iconbtn {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--surround-lift);
+    box-shadow: inset 0 0 0 1.5px rgba(238, 242, 238, 0.2);
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  }
+  .iconbtn svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .iconbtn:focus-visible {
+    outline: 2px solid var(--cork);
+    outline-offset: 3px;
+  }
+  .iconbtn .wave {
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+  .iconbtn .mute {
+    opacity: 1;
+    transition: opacity 160ms ease;
+  }
+
+  .iconbtn[aria-pressed="true"] {
+    background: var(--cork);
+    color: #17110a;
+    box-shadow: inset 0 0 0 1.5px var(--cork);
+  }
+  .iconbtn[aria-pressed="true"] .wave {
+    opacity: 1;
+  }
+  .iconbtn[aria-pressed="true"] .mute {
+    opacity: 0;
+  }
+
   /* live input meter, used by the mic test in Setup */
   .meter {
     height: 0.5rem;
@@ -965,26 +1020,47 @@
       Undo
     </button>
 
-    <button
-      class="mic"
-      id="mic"
-      aria-pressed="false"
-      aria-label="Start listening"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.9"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
+    <div class="centre">
+      <button class="iconbtn" id="speak" aria-pressed="false" aria-label="Say the score aloud">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 9v6h4l5 4V5L8 9H4Z" />
+          <path class="wave" d="M16.5 8.5a5 5 0 0 1 0 7" />
+          <path class="wave" d="M19 6a8.5 8.5 0 0 1 0 12" />
+          <path class="mute" d="m17 9.5 5 5m0-5-5 5" />
+        </svg>
+      </button>
+
+      <button
+        class="mic"
+        id="mic"
+        aria-pressed="false"
+        aria-label="Start listening"
       >
-        <rect x="9" y="2" width="6" height="11" rx="3" />
-        <path d="M5 11a7 7 0 0 0 14 0" />
-        <path d="M12 18v4" />
-      </svg>
-    </button>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="9" y="2" width="6" height="11" rx="3" />
+          <path d="M5 11a7 7 0 0 0 14 0" />
+          <path d="M12 18v4" />
+        </svg>
+      </button>
+
+      <span class="spacer" aria-hidden="true"></span>
+    </div>
 
     <button class="btn right" id="menu" aria-label="Open settings">
       <svg
@@ -1133,22 +1209,10 @@
       <kbd>“Next game”</kbd><span>Start the next game once one is won</span>
     </div>
     <div>
-      <kbd>“Reset game”</kbd><span>Put the current game back to 0 – 0</span>
+      <kbd>“Restart game”</kbd><span>Put the current game back to 0 – 0 — also “reset”, “start over”</span>
     </div>
   </div>
 
-  <div class="row">
-    <span class="txt"
-      ><strong>Say the score aloud</strong
-      ><span>Reads the running score after each point</span></span
-    >
-    <button
-      class="sw"
-      id="swSpeak"
-      aria-pressed="true"
-      aria-label="Say the score aloud"
-    ></button>
-  </div>
   <div class="row">
     <span class="txt"
       ><strong>Point beep</strong
@@ -1164,7 +1228,7 @@
   <div class="row" style="margin-bottom: 1.25rem">
     <span class="txt"
       ><strong>Keep the screen on</strong
-      ><span>Stops the phone sleeping mid-rally</span></span
+      ><span>Stays awake while you play, sleeps once the score has not changed for 5 minutes</span></span
     >
     <button
       class="sw"
@@ -1217,9 +1281,9 @@
       matchWon: null, // team that won the match
       names: { a: "Team A", b: "Team B" },
       target: 21,
-      bestOf: 1,
+      bestOf: 3,
       seen: false, // has the how-to page been dismissed?
-      speak: true,
+      speak: false,
       beep: true,
       wake: true,
     };
@@ -1280,6 +1344,7 @@
       beep(team);
       if (S.won) announceGame(team);
       else announceScore(team);
+      touchScore();
       save();
     }
 
@@ -1292,6 +1357,7 @@
       S.game += 1;
       S.won = null;
       render();
+      touchScore();
       save();
     }
 
@@ -1302,6 +1368,7 @@
       S.won = null;
       S.matchWon = null;
       render();
+      touchScore();
       save();
     }
 
@@ -1316,6 +1383,7 @@
       S.won = null;
       S.matchWon = null;
       render();
+      touchScore();
       save();
     }
 
@@ -1343,6 +1411,7 @@
         S[k] = v[k];
       });
       render();
+      touchScore();
       save();
     }
 
@@ -1496,7 +1565,7 @@
       $("inB").value = S.names.b;
       seg($("segTarget"), S.target);
       seg($("segBest"), S.bestOf);
-      $("swSpeak").setAttribute("aria-pressed", String(S.speak));
+      $("speak").setAttribute("aria-pressed", String(S.speak));
       $("swBeep").setAttribute("aria-pressed", String(S.beep));
       $("swWake").setAttribute("aria-pressed", String(S.wake));
     }
@@ -1610,7 +1679,7 @@
         { cmd: "next", re: /\b(?:next game|new game|next set)\b/g },
         {
           cmd: "reset",
-          re: /\b(?:reset(?: the)?(?: game| score)?|start over|zero zero|love all)\b/g,
+          re: /\b(?:(?:reset|re\s?start)(?:\s+the)?(?:\s+game|\s+score)?|start over|zero zero|love all)\b/g,
         },
         {
           cmd: "a",
@@ -2214,10 +2283,21 @@
       }
     }
 
-    /* ---------- screen wake lock ---------- */
+    /* ---------- screen wake lock ----------
+       The screen is held awake while a game is being played, and let go once
+       the score has sat unchanged for five minutes — then the phone's own
+       auto-lock takes over again. */
+    var IDLE_MS = 5 * 60 * 1000;
     var lock = null;
+    var lastPointAt = Date.now();
+
+    function idle() {
+      return Date.now() - lastPointAt > IDLE_MS;
+    }
+
     function acquireWake() {
-      if (!S.wake || !navigator.wakeLock) return;
+      if (!S.wake || !navigator.wakeLock || lock || idle()) return;
+      if (document.visibilityState !== "visible") return;
       navigator.wakeLock
         .request("screen")
         .then(function (l) {
@@ -2236,6 +2316,17 @@
         lock = null;
       }
     }
+
+    // Called whenever the scoreboard changes: restart the five minutes.
+    function touchScore() {
+      lastPointAt = Date.now();
+      acquireWake();
+    }
+
+    setInterval(function () {
+      if (idle()) releaseWake();
+    }, 30000);
+
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible") {
         acquireWake();
@@ -2322,14 +2413,15 @@
         save();
       });
     }
-    sw("swSpeak", "speak", function () {
-      if (S.speak) say("Ready");
+    sw("speak", "speak", function () {
+      if (S.speak) { say("Score on"); caption("Score read aloud after each point"); }
+      else caption("Score announcements off");
     });
     sw("swBeep", "beep", function () {
       if (S.beep) beep("a");
     });
     sw("swWake", "wake", function () {
-      if (S.wake) acquireWake();
+      if (S.wake) touchScore();   // switching it on restarts the five minutes
       else releaseWake();
     });
 
