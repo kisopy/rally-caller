@@ -415,80 +415,7 @@
     justify-self: end;
   }
 
-  .mic {
-    --sig: rgba(238, 242, 238, 0.22);
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 3.5rem;
-    height: 3.5rem;
-    border: 0;
-    border-radius: 50%;
-    background: var(--surround-lift);
-    box-shadow: inset 0 0 0 1.5px var(--sig);
-    color: var(--ink-dim);
-    cursor: pointer;
-    transition:
-      background 160ms ease,
-      color 160ms ease,
-      box-shadow 160ms ease,
-      transform 160ms cubic-bezier(0.2, 1.4, 0.4, 1);
-  }
-  .mic svg {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  .mic:focus-visible {
-    outline: 2px solid var(--cork);
-    outline-offset: 3px;
-  }
-
-  /* waiting on the browser to open the audio stream */
-  .mic.starting {
-    --sig: var(--pending);
-  }
-  /* the mic is genuinely capturing */
-  .mic.live,
-  .mic.hearing {
-    --sig: var(--live);
-  }
-
-  .mic.on {
-    background: var(--sig);
-    color: #06180f;
-    box-shadow: inset 0 0 0 1.5px var(--sig);
-  }
-  .mic.on::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 2px solid var(--sig);
-    animation: ring 1.9s ease-out infinite;
-  }
-  /* sound is arriving right now */
-  .mic.hearing {
-    transform: scale(1.07);
-  }
-  .mic.hearing::after {
-    animation-duration: 0.85s;
-  }
-
-  @keyframes ring {
-    0% {
-      transform: scale(0.86);
-      opacity: 0.9;
-    }
-    100% {
-      transform: scale(1.32);
-      opacity: 0;
-    }
-  }
-  .mic.dead {
-    opacity: 0.34;
-  }
-
-  /* speaker toggle, sat beside the mic; the spacer keeps the mic dead centre */
+  /* speaker and camera toggles either side of centre */
   .centre {
     display: flex;
     align-items: center;
@@ -543,21 +470,117 @@
     opacity: 0;
   }
 
-  /* live input meter, used by the mic test in Setup */
-  .meter {
-    height: 0.5rem;
-    margin-top: 0.5rem;
-    border-radius: 999px;
-    background: rgba(238, 242, 238, 0.1);
+  /* ---------- camera gesture panel ---------- */
+  .cam {
+    position: absolute;
+    z-index: 6;
+    right: 0.75rem;
+    bottom: calc(var(--bar-h) + var(--pad-b) + 0.625rem);
+    width: min(42vw, 15rem);
+    aspect-ratio: 3 / 4;
+    border-radius: 0.875rem;
     overflow: hidden;
+    background: #000;
+    box-shadow: 0 0 0 1px rgba(238, 242, 238, 0.18), 0 14px 40px rgba(0, 0, 0, 0.55);
   }
-  .meter i {
-    display: block;
-    width: 0%;
+  .cam[hidden] {
+    display: none;
+  }
+  .cam video,
+  .cam canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
     height: 100%;
+    object-fit: cover;
+  }
+  /* the front camera is mirrored so gestures feel the right way round */
+  .cam.mirror video,
+  .cam.mirror canvas {
+    transform: scaleX(-1);
+  }
+
+  .camRing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4.5rem;
+    height: 4.5rem;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 120ms ease;
+    pointer-events: none;
+  }
+  .camRing.on {
+    opacity: 1;
+  }
+  .camRing circle {
+    fill: none;
+    stroke-width: 6;
+  }
+  .camRing .track {
+    stroke: rgba(255, 255, 255, 0.2);
+  }
+  .camRing .progress {
+    stroke: var(--court-a-lift);
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke 120ms ease;
+  }
+
+  .camPill {
+    position: absolute;
+    left: 0.375rem;
+    right: 0.375rem;
+    bottom: 0.375rem;
+    padding: 0.3125rem 0.5rem;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--live), #8fe3b6);
-    transition: width 70ms linear;
+    background: rgba(8, 17, 15, 0.78);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.14);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: center;
+    color: var(--ink-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
+  .camPill.a {
+    color: #9CCBFF;
+  }
+  .camPill.b {
+    color: #8FE3B6;
+  }
+  .camPill.warn {
+    color: var(--cork);
+  }
+
+  .camFlip {
+    position: absolute;
+    top: 0.375rem;
+    right: 0.375rem;
+    display: grid;
+    place-items: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(8, 17, 15, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.18);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .camFlip svg {
+    width: 0.9375rem;
+    height: 0.9375rem;
+  }
+  .camFlip:focus-visible {
+    outline: 2px solid var(--cork);
+    outline-offset: 2px;
   }
 
   /* ---------- settings sheet ---------- */
@@ -732,36 +755,6 @@
     outline-offset: 2px;
   }
 
-  .vstat {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5625rem;
-    padding: 0.6875rem 0.75rem;
-    border-radius: 0.625rem;
-    background: rgba(238, 242, 238, 0.06);
-    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.12);
-    font-size: 0.8125rem;
-    line-height: 1.45;
-    color: var(--ink-dim);
-  }
-  .vstat b {
-    flex: none;
-    width: 0.5rem;
-    height: 0.5rem;
-    margin-top: 0.34rem;
-    border-radius: 50%;
-    background: var(--ink-faint);
-  }
-  .vstat.ok b {
-    background: #4ed08a;
-  }
-  .vstat.warn b {
-    background: #f5c77e;
-  }
-  .vstat.bad b {
-    background: #f2a0a0;
-  }
-
   .cmds {
     margin: 0.25rem 0 1.375rem;
     display: grid;
@@ -882,6 +875,124 @@
     color: var(--ink-dim);
   }
 
+  /* ---- how-to: the two routes ---- */
+  .way {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.875rem;
+    background: rgba(238, 242, 238, 0.045);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.11);
+  }
+  .wayHead {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.875rem;
+  }
+  .wayHead div {
+    display: grid;
+    gap: 0.1875rem;
+  }
+  .wayHead strong {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .wayHead span {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+  .wayIcon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: 50%;
+  }
+  .wayIcon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .wayIcon.cam {
+    background: var(--cork);
+    color: #17110a;
+  }
+
+  .wayList {
+    margin: 0 0 0.75rem;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.4375rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+  .wayList li {
+    padding-left: 0.875rem;
+    position: relative;
+  }
+  .wayList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 0.3125rem;
+    height: 0.3125rem;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+  .wayList b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .wayNote {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ink-faint);
+  }
+
+  /* ---- how-to: gesture cards ---- */
+  .gestures {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+    margin-bottom: 0.875rem;
+  }
+  .gesture {
+    display: grid;
+    justify-items: center;
+    gap: 0.375rem;
+    padding: 0.875rem 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    background: rgba(238, 242, 238, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(238, 242, 238, 0.1);
+    text-align: center;
+  }
+  .gesture svg {
+    width: 3.25rem;
+    height: 3.85rem;
+  }
+  .gesture .gName {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+  .gesture .gWhat {
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    color: var(--ink-faint);
+  }
+  .gesture.ga { color: #4E9BE0; }
+  .gesture.gb { color: #4ED08A; }
+  .gesture.gu { color: var(--cork); }
+  .gesture.gr { color: #F2A0A0; }
+
   .introNote {
     margin: 0 0 1.5rem;
     padding: 0.75rem 0.875rem;
@@ -1001,6 +1112,29 @@
     </div>
   </div>
 
+  <div class="cam" id="cam" hidden>
+    <video id="camVideo" autoplay playsinline muted></video>
+    <canvas id="camOverlay"></canvas>
+    <svg class="camRing" id="camRing" viewBox="0 0 96 96" aria-hidden="true">
+      <circle class="track" cx="48" cy="48" r="42"></circle>
+      <circle
+        class="progress"
+        id="camRingProgress"
+        cx="48" cy="48" r="42"
+        stroke-dasharray="264"
+        stroke-dashoffset="264"
+      ></circle>
+    </svg>
+    <div class="camPill" id="camPill">Starting camera&hellip;</div>
+    <button class="camFlip" id="camFlip" aria-label="Switch camera">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 12a8 8 0 0 1 13.7-5.6L20 8" /><path d="M20 4v4h-4" />
+        <path d="M20 12a8 8 0 0 1-13.7 5.6L4 16" /><path d="M4 20v-4h4" />
+      </svg>
+    </button>
+  </div>
+
   <div class="bar">
     <div class="heard" id="heard"></div>
 
@@ -1038,12 +1172,9 @@
         </svg>
       </button>
 
-      <button
-        class="mic"
-        id="mic"
-        aria-pressed="false"
-        aria-label="Start listening"
-      >
+
+
+      <button class="iconbtn" id="camBtn" aria-pressed="false" aria-label="Score with hand gestures">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -1053,13 +1184,10 @@
           stroke-linejoin="round"
           aria-hidden="true"
         >
-          <rect x="9" y="2" width="6" height="11" rx="3" />
-          <path d="M5 11a7 7 0 0 0 14 0" />
-          <path d="M12 18v4" />
+          <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.8A1 1 0 0 1 8.7 4.7h6.6a1 1 0 0 1 .9.5L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-9Z" />
+          <circle cx="12" cy="13" r="3.4" />
         </svg>
       </button>
-
-      <span class="spacer" aria-hidden="true"></span>
     </div>
 
     <button class="btn right" id="menu" aria-label="Open settings">
@@ -1081,45 +1209,127 @@
 <div class="intro" id="intro" hidden>
   <div class="introBox">
     <h1 class="introTitle">Mac Badminton Rally Caller</h1>
-    <p class="introSub">Keep the badminton score with your voice.</p>
+    <p class="introSub">
+      Keep the score without touching your phone. Show the camera a hand
+      signal, or tap the side that scored.
+    </p>
 
-    <ol class="steps">
-      <li>
-        <span class="n">1</span>
+    <!-- ================= how to score ================= -->
+    <section class="way">
+      <div class="wayHead">
+        <span class="wayIcon cam">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.8A1 1 0 0 1 8.7 4.7h6.6a1 1 0 0 1 .9.5L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-9Z" />
+            <circle cx="12" cy="13" r="3.4" />
+          </svg>
+        </span>
         <div>
-          <strong>Tap the mic</strong
-          ><span
-            >Allow the microphone when your phone asks. It turns green when
-            it&rsquo;s listening.</span
-          >
+          <strong>Use your camera</strong>
+          <span>Tap the camera, then allow it. Show a hand and hold it until the ring fills.</span>
         </div>
-      </li>
-      <li>
-        <span class="n">2</span>
-        <div>
-          <strong>Call the point</strong
-          ><span id="introCall"
-            >Say &ldquo;Team A&rdquo; or &ldquo;Team B&rdquo; every time someone
-            scores.</span
-          >
+      </div>
+
+      <div class="gestures">
+        <div class="gesture ga">
+          <svg viewBox="0 0 64 76" aria-hidden="true">
+            <defs>
+              <linearGradient id="hg-a" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" stop-color="currentColor" stop-opacity="1" />
+                <stop offset="1" stop-color="currentColor" stop-opacity="0.7" />
+              </linearGradient>
+            </defs>
+            <g fill="url(#hg-a)">
+              <path d="M22 68c-7 0-12-5-12-12V44c0-6 4-10 10-10h6v-14c0-6 4-10 9-10 4 0 7 3 7 8v16h6c7 0 12 5 12 12v10c0 7-5 12-12 12H22Z" />
+            </g>
+            <g stroke="#0B1513" stroke-width="1.5" stroke-linecap="round" opacity=".28">
+              <path d="M26 44h20M26 52h20M26 60h16" />
+              <path d="M35 20v14" />
+            </g>
+          </svg>
+          <span class="gName">Thumbs up</span>
+          <span class="gWhat" id="gestureA">Point to Team A</span>
         </div>
-      </li>
-      <li>
-        <span class="n">3</span>
-        <div>
-          <strong>Use your own names</strong
-          ><span
-            >Tap Setup and type the names, like Bob and Kate. Their names work
-            too &mdash; but &ldquo;Team A&rdquo; and &ldquo;Team B&rdquo; always
-            score.</span
-          >
+
+        <div class="gesture gb">
+          <svg viewBox="0 0 64 76" aria-hidden="true">
+            <defs>
+              <linearGradient id="hg-b" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" stop-color="currentColor" stop-opacity="1" />
+                <stop offset="1" stop-color="currentColor" stop-opacity="0.7" />
+              </linearGradient>
+            </defs>
+<g transform="rotate(180 32 38)">            <g fill="url(#hg-b)">
+              <path d="M22 68c-7 0-12-5-12-12V44c0-6 4-10 10-10h6v-14c0-6 4-10 9-10 4 0 7 3 7 8v16h6c7 0 12 5 12 12v10c0 7-5 12-12 12H22Z" />
+            </g>
+            <g stroke="#0B1513" stroke-width="1.5" stroke-linecap="round" opacity=".28">
+              <path d="M26 44h20M26 52h20M26 60h16" />
+              <path d="M35 20v14" />
+            </g></g>
+          </svg>
+          <span class="gName">Thumbs down</span>
+          <span class="gWhat" id="gestureB">Point to Team B</span>
         </div>
-      </li>
-    </ol>
+
+        <div class="gesture gu">
+          <svg viewBox="0 0 64 76" aria-hidden="true">
+            <defs>
+              <linearGradient id="hg-u" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" stop-color="currentColor" stop-opacity="1" />
+                <stop offset="1" stop-color="currentColor" stop-opacity="0.7" />
+              </linearGradient>
+            </defs>
+            <g fill="url(#hg-u)">
+              <rect x="16" y="38" width="34" height="30" rx="13" />
+              <rect x="20" y="14" width="9" height="30" rx="4.5" transform="rotate(-7 24.5 44)" />
+              <rect x="29.5" y="10" width="9" height="34" rx="4.5" transform="rotate(-1 34 44)" />
+              <rect x="39" y="14" width="9" height="30" rx="4.5" transform="rotate(6 43.5 44)" />
+            </g>
+            <g stroke="#0B1513" stroke-width="1.5" stroke-linecap="round" opacity=".28">
+              <path d="M24 50c6 3 14 3 20 0" />
+            </g>
+          </svg>
+          <span class="gName">Three fingers</span>
+          <span class="gWhat">Undo the last point</span>
+        </div>
+
+        <div class="gesture gr">
+          <svg viewBox="0 0 64 76" aria-hidden="true">
+            <defs>
+              <linearGradient id="hg-r" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" stop-color="currentColor" stop-opacity="1" />
+                <stop offset="1" stop-color="currentColor" stop-opacity="0.7" />
+              </linearGradient>
+            </defs>
+            <g fill="url(#hg-r)">
+              <rect x="15" y="38" width="35" height="30" rx="13" />
+              <rect x="18" y="15" width="8.5" height="29" rx="4.25" transform="rotate(-10 22 44)" />
+              <rect x="27.5" y="10" width="8.5" height="34" rx="4.25" transform="rotate(-2 31.5 44)" />
+              <rect x="37" y="12" width="8.5" height="32" rx="4.25" transform="rotate(6 41 44)" />
+              <rect x="45.5" y="19" width="8" height="25" rx="4" transform="rotate(14 49 44)" />
+              <rect x="4" y="38" width="8.5" height="26" rx="4.25" transform="rotate(-38 8 44)" />
+            </g>
+            <g stroke="#0B1513" stroke-width="1.5" stroke-linecap="round" opacity=".28">
+              <path d="M23 51c6 3 15 3 21 0" />
+            </g>
+          </svg>
+          <span class="gName">Open hand</span>
+          <span class="gWhat">Restart at 0 &ndash; 0</span>
+        </div>
+      </div>
+
+      <p class="wayNote">
+        Restart is held longer on purpose, so it can&rsquo;t happen by accident. Undo
+        and restart are also read aloud when the speaker is on.
+      </p>
+    </section>
 
     <p class="introNote">
-      Too noisy for the mic? Tap either side of the screen to score. Say
-      &ldquo;undo&rdquo; to take a point back.
+      <b>Your own names:</b> tap Setup and type them, like Bob and Kate. They
+      show on the scoreboard and are read aloud with the score.
+    </p>
+    <p class="introNote">
+      No camera? Tap either side of the screen to score.
     </p>
 
     <button class="btn wide" id="introGo">Continue</button>
@@ -1178,39 +1388,14 @@
     </div>
   </div>
 
-  <div class="field">
-    <span class="lbl">Voice</span>
-    <div class="vstat" id="vstat">
-      <b id="vdot"></b><span id="vtext">Checking…</span>
-    </div>
-    <button class="btn wide" id="ownTab" hidden>Open in its own tab</button>
-    <button class="btn wide" id="micTest">Test the microphone</button>
-    <div class="meter" id="meter" hidden><i id="meterFill"></i></div>
-  </div>
 
-  <span class="lbl">Voice commands</span>
+
+  <span class="lbl">Hand gestures</span>
   <div class="cmds">
-    <div>
-      <kbd id="cmdKa">“Team A”</kbd
-      ><span id="cmdDa"
-        >Point to the blue side — also “A”, “point A”, “alpha”</span
-      >
-    </div>
-    <div>
-      <kbd id="cmdKb">“Team B”</kbd
-      ><span id="cmdDb"
-        >Point to the green side — also “B”, “point B”, “bravo”</span
-      >
-    </div>
-    <div>
-      <kbd>“Undo”</kbd><span>Take back the last point — also “oops”</span>
-    </div>
-    <div>
-      <kbd>“Next game”</kbd><span>Start the next game once one is won</span>
-    </div>
-    <div>
-      <kbd>“Restart game”</kbd><span>Put the current game back to 0 – 0 — also “reset”, “start over”</span>
-    </div>
+    <div><kbd>Thumbs up</kbd><span>Point to the blue side</span></div>
+    <div><kbd>Thumbs down</kbd><span>Point to the green side</span></div>
+    <div><kbd>Three fingers</kbd><span>Hold up three fingers — undoes the last point</span></div>
+    <div><kbd>Open hand</kbd><span>All five fingers — restarts the game at 0 – 0, hold a little longer</span></div>
   </div>
 
   <div class="row">
@@ -1369,6 +1554,7 @@
       S.matchWon = null;
       render();
       touchScore();
+      say("Game restarted. Love all.");
       save();
     }
 
@@ -1412,7 +1598,21 @@
       });
       render();
       touchScore();
+      announceUndo();
       save();
+    }
+
+    // Spoken confirmations for the two actions you cannot see coming — they run
+    // through say(), so the speaker button still decides whether you hear them.
+    function announceUndo() {
+      if (!S.a && !S.b) {
+        say("Undo. Love all.");
+        return;
+      }
+      var sv = S.server || "a";
+      var mine = S[sv],
+        theirs = S[sv === "a" ? "b" : "a"];
+      say("Undo. " + (mine === theirs ? mine + " all" : mine + " " + theirs));
     }
 
     /* ---------- sound ---------- */
@@ -1528,7 +1728,6 @@
       setName("nameB", S.names.b);
       $("sideA").setAttribute("aria-label", "Add a point for " + S.names.a);
       $("sideB").setAttribute("aria-label", "Add a point for " + S.names.b);
-      updateCmdHelp();
 
       if (S.a !== lastA) pop($("scoreA"));
       if (S.b !== lastB) pop($("scoreB"));
@@ -1614,36 +1813,6 @@
       setTimeout(fitNames, 250);
     });
 
-    // Always "Team A" / "Team B" — the letters work no matter what the teams
-    // are called, so that is what we tell people to say.
-    function callPhrase(k) {
-      return "Team " + k.toUpperCase();
-    }
-
-    // The command list leads with the letter and lists the names as extras.
-    function updateCmdHelp() {
-      [
-        ["a", "cmdKa", "cmdDa", "blue"],
-        ["b", "cmdKb", "cmdDb", "green"],
-      ].forEach(function (row) {
-        var k = row[0],
-          named = nameTokens(k).length > 0,
-          letter = k.toUpperCase();
-        $(row[1]).textContent = "“Team " + letter + "”";
-
-        var also = ["“" + letter + "”", "“point " + letter + "”"];
-        if (named) {
-          also.unshift("“Team " + S.names[k] + "”");
-          var ini = initials()[k];
-          if (ini) also.push("“Team " + ini.toUpperCase() + "”");
-        } else {
-          also.push("“" + (k === "a" ? "alpha" : "bravo") + "”");
-        }
-        $(row[2]).textContent =
-          "Point to the " + row[3] + " side — also " + also.join(", ");
-      });
-    }
-
     function pop(el) {
       el.classList.remove("pop");
       void el.offsetWidth;
@@ -1657,630 +1826,6 @@
           String(Number(b.dataset.v) === Number(val)),
         );
       });
-    }
-
-    /* ---------- voice in ---------- */
-    var TEAM = "(?:team|teams|tim|deem|dean|the team)";
-    var AW = "(?:a|ay|aye|eh|hey|hay|8|eight|ate|aid|alpha|able)";
-    var BW = "(?:b|be|bee|bea|p|pee|beat|beam|bravo|baker)";
-    // a bare word only scores when it is the whole utterance, so this set stays
-    // tight — "hey" or "be" on their own are too easy to say by accident
-    var AW_SOLO = "(?:a|ay|aye|8|eight|alpha)";
-    var BW_SOLO = "(?:b|bee|bea|bravo)";
-
-    // "Team A" is always the blue side and "Team B" always the green one, whatever
-    // the teams are named. Names are an addition, never a replacement.
-    function rules() {
-      var r = [
-        {
-          cmd: "undo",
-          re: /\b(?:undo|oops|whoops|mistake|cancel that|scratch that|take that back|my bad)\b/g,
-        },
-        { cmd: "next", re: /\b(?:next game|new game|next set)\b/g },
-        {
-          cmd: "reset",
-          re: /\b(?:(?:reset|re\s?start)(?:\s+the)?(?:\s+game|\s+score)?|start over|zero zero|love all)\b/g,
-        },
-        {
-          cmd: "a",
-          re: new RegExp(
-            "\\b(?:" +
-              TEAM +
-              "\\s+" +
-              AW +
-              "|point\\s+(?:for\\s+|to\\s+)?" +
-              AW +
-              "|" +
-              AW +
-              "\\s+(?:point|scores?)|" +
-              AW +
-              "\\s+" +
-              TEAM +
-              ")\\b",
-            "g",
-          ),
-        },
-        {
-          cmd: "b",
-          re: new RegExp(
-            "\\b(?:" +
-              TEAM +
-              "\\s+" +
-              BW +
-              "|point\\s+(?:for\\s+|to\\s+)?" +
-              BW +
-              "|" +
-              BW +
-              "\\s+(?:point|scores?)|" +
-              BW +
-              "\\s+" +
-              TEAM +
-              ")\\b",
-            "g",
-          ),
-        },
-      ];
-      // "Team V" / "point V", where V is the initial of a renamed team
-      var ini = initials();
-      ["a", "b"].forEach(function (k) {
-        if (!ini[k]) return;
-        var alt = LETTER[ini[k]].join("|");
-        r.push({
-          cmd: k,
-          re: new RegExp("\\b(?:team|point)\\s+(?:" + alt + ")\\b", "g"),
-        });
-      });
-
-      return r;
-    }
-
-    /* ---------- matching custom names by sound ----------
-     Speech-to-text almost never returns a name spelled the way it was typed:
-     a typed "Nikki" comes back as "Nicky" or "Nikkei". Comparing text exactly is
-     therefore useless for names, so we compare how they sound. */
-
-    function soundex(s) {
-      s = String(s)
-        .toUpperCase()
-        .replace(/[^A-Z]/g, "");
-      if (!s) return "";
-      var code = {
-        B: 1,
-        F: 1,
-        P: 1,
-        V: 1,
-        C: 2,
-        G: 2,
-        J: 2,
-        K: 2,
-        Q: 2,
-        S: 2,
-        X: 2,
-        Z: 2,
-        D: 3,
-        T: 3,
-        L: 4,
-        M: 5,
-        N: 5,
-        R: 6,
-      };
-      var out = "",
-        prev = code[s.charAt(0)] || 0;
-      for (var i = 1; i < s.length && out.length < 3; i++) {
-        var ch = s.charAt(i),
-          c = code[ch] || 0;
-        if (c && c !== prev) out += c;
-        if (ch !== "H" && ch !== "W") prev = c;
-      }
-      return (s.charAt(0) + out + "000").slice(0, 4);
-    }
-
-    function lev(a, b) {
-      var m = a.length,
-        n = b.length;
-      if (!m) return n;
-      if (!n) return m;
-      var prev = [],
-        cur = [],
-        i,
-        j;
-      for (j = 0; j <= n; j++) prev[j] = j;
-      for (i = 1; i <= m; i++) {
-        cur[0] = i;
-        for (j = 1; j <= n; j++) {
-          cur[j] = Math.min(
-            prev[j] + 1,
-            cur[j - 1] + 1,
-            prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1),
-          );
-        }
-        var t = prev;
-        prev = cur;
-        cur = t;
-      }
-      return prev[n];
-    }
-
-    // The words of a team's name that are worth listening for.
-    function nameTokens(k) {
-      var n = String(S.names[k] || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, " ")
-        .trim();
-      if (!n || /^team\s+[ab]$/.test(n)) return [];
-      return n
-        .replace(/^team\s+/, "")
-        .split(/\s+/)
-        .filter(function (w) {
-          return w.length >= 3 && w !== "team";
-        });
-    }
-
-    /* ---------- calling a team by its initial ----------
-     "Team B" for Bob. Recognisers spell letters out inconsistently, so each
-     letter carries the forms it commonly comes back as. */
-    var LETTER = {
-      a: ["a", "ay", "aye", "eh", "hey", "eight", "8"],
-      b: ["b", "be", "bee", "bea", "p", "pee"],
-      c: ["c", "see", "sea"],
-      d: ["d", "dee"],
-      e: ["e", "ee"],
-      f: ["f", "ef", "eff"],
-      g: ["g", "gee", "jee"],
-      h: ["h", "aitch", "haitch"],
-      i: ["i", "eye", "aye"],
-      j: ["j", "jay", "jae"],
-      k: ["k", "kay", "cay"],
-      l: ["l", "el", "ell"],
-      m: ["m", "em"],
-      n: ["n", "en"],
-      o: ["o", "oh", "owe"],
-      p: ["p", "pee", "pea"],
-      q: ["q", "cue", "queue"],
-      r: ["r", "are", "ar"],
-      s: ["s", "es", "ess"],
-      t: ["t", "tee", "tea"],
-      u: ["u", "you", "yew", "ewe"],
-      v: ["v", "vee", "we", "ve"],
-      w: ["w", "double u", "dub"],
-      x: ["x", "ex", "ecks"],
-      y: ["y", "why", "wye"],
-      z: ["z", "zed", "zee"],
-    };
-    // forms that are ordinary words — fine after "team", never on their own
-    var RISKY = {
-      a: 1,
-      i: 1,
-      o: 1,
-      we: 1,
-      you: 1,
-      are: 1,
-      see: 1,
-      sea: 1,
-      be: 1,
-      tea: 1,
-      cue: 1,
-      queue: 1,
-      why: 1,
-      eye: 1,
-      ewe: 1,
-      owe: 1,
-      hey: 1,
-      eh: 1,
-      ay: 1,
-      pea: 1,
-      eight: 1,
-      8: 1,
-      ess: 1,
-      en: 1,
-    };
-
-    function initialFor(k) {
-      var toks = nameTokens(k);
-      if (!toks.length) return null;
-      var ch = toks[0].charAt(0);
-      return /[a-z]/.test(ch) && LETTER[ch] ? ch : null;
-    }
-
-    // An initial only counts when nothing else already answers to that letter.
-    // A and B are permanently spoken for, so a team named Bob keeps no initial.
-    function initials() {
-      var ia = initialFor("a"),
-        ib = initialFor("b");
-      if (ia && ib && ia === ib) {
-        ia = null;
-        ib = null;
-      }
-      if (ia === "a" || ia === "b") ia = null;
-      if (ib === "a" || ib === "b") ib = null;
-      return { a: ia, b: ib };
-    }
-
-    // How closely a spoken word matches a team's name. Lower is better, null is no match.
-    function nameScore(word, k) {
-      var toks = nameTokens(k),
-        best = null,
-        i;
-      for (i = 0; i < toks.length; i++) {
-        var w = toks[i];
-        if (word === w) return 0;
-        // three-letter names are too easy to collide with ordinary speech
-        if (word.length < 4 || w.length < 4) continue;
-        var d = lev(word, w);
-        // Names are usually heard with the right opening sound, so a shared first
-        // letter earns extra tolerance. Without it we stay strict, which keeps
-        // ordinary words ("season" against "Susan") from scoring points.
-        var maxLen = Math.max(w.length, word.length);
-        var sameHead = word.charAt(0) === w.charAt(0);
-        var tol = maxLen >= 8 || (sameHead && maxLen >= 6) ? 2 : 1;
-        if (d <= tol) best = best === null ? d : Math.min(best, d);
-        else if (soundex(word) === soundex(w))
-          best = best === null ? 1.5 : Math.min(best, 1.5);
-      }
-      return best;
-    }
-
-    function parse(text) {
-      var t = String(text)
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      if (!t) return [];
-
-      // a bare "a" / "b" only counts when it is the whole utterance
-      if (new RegExp("^" + AW_SOLO + "$").test(t)) return ["a"];
-      if (new RegExp("^" + BW_SOLO + "$").test(t)) return ["b"];
-
-      // a lone initial, when it isn't also an everyday word
-      var solo = initials(),
-        sk;
-      for (sk in solo) {
-        if (!solo[sk]) continue;
-        if (
-          LETTER[solo[sk]].some(function (f) {
-            return f === t && !RISKY[f];
-          })
-        )
-          return [sk];
-      }
-
-      var hits = [];
-      rules().forEach(function (rule) {
-        rule.re.lastIndex = 0;
-        var m;
-        while ((m = rule.re.exec(t)) !== null) {
-          hits.push({ at: m.index, end: m.index + m[0].length, cmd: rule.cmd });
-          if (m[0].length === 0) rule.re.lastIndex++;
-        }
-      });
-
-      // now the spoken words, matched against the team names by sound.
-      // Neighbouring words that hit the same team are one name, not two points —
-      // "red dragons" must score once.
-      var wordRe = /[a-z0-9]+/g,
-        w,
-        ord = -1,
-        run = null;
-      while ((w = wordRe.exec(t)) !== null) {
-        ord++;
-        if (w[0] === "team") continue;
-        var sa = nameScore(w[0], "a"),
-          sb = nameScore(w[0], "b");
-        if (sa === null && sb === null) continue;
-        var pick;
-        if (sa !== null && sb !== null) {
-          if (sa === sb) continue; // both names sound alike here — too risky to guess
-          pick = sa < sb ? "a" : "b";
-        } else {
-          pick = sa !== null ? "a" : "b";
-        }
-        if (run && run.cmd === pick && run.ord === ord - 1) {
-          run.end = w.index + w[0].length; // same name continuing
-          run.ord = ord;
-          continue;
-        }
-        run = { at: w.index, end: w.index + w[0].length, cmd: pick, ord: ord };
-        hits.push(run);
-      }
-
-      hits.sort(function (x, y) {
-        return x.at - y.at || y.end - x.end;
-      });
-
-      var out = [],
-        edge = -1;
-      hits.forEach(function (h) {
-        if (h.at < edge) return; // drop overlaps so "team a point" scores once
-        edge = h.end;
-        out.push(h.cmd);
-      });
-      return out;
-    }
-
-    function run(cmds) {
-      cmds.forEach(function (c) {
-        if (c === "a" || c === "b") {
-          if (S.won || S.matchWon) return;
-          point(c);
-        } else if (c === "undo") {
-          undo();
-        } else if (c === "next") {
-          if (S.matchWon) newMatch();
-          else nextGame();
-        } else if (c === "reset") {
-          resetGame();
-        }
-      });
-    }
-
-    function caption(text, warn, sticky) {
-      var el = $("heard");
-      el.textContent = text;
-      el.classList.toggle("warn", !!warn);
-      el.classList.add("on");
-      clearTimeout(captionTimer);
-      if (sticky) return;
-      captionTimer = setTimeout(
-        function () {
-          el.classList.remove("on");
-        },
-        warn ? 6000 : 2600,
-      );
-    }
-
-    /* ---------- where are we running? ---------- */
-    var UA = navigator.userAgent;
-    var embedded = (function () {
-      try {
-        return window.self !== window.top;
-      } catch (e) {
-        return true;
-      }
-    })();
-    var iOS =
-      /iP(hone|ad|od)/.test(UA) ||
-      (/Mac/.test(navigator.platform || "") && navigator.maxTouchPoints > 1);
-    var iOSNonSafari = iOS && /CriOS|FxiOS|EdgiOS|OPiOS/.test(UA);
-    var isFirefox = /Firefox/.test(UA);
-
-    // Why can't this browser listen? Returns null when it can.
-    function voiceBlocker() {
-      if (window.SpeechRecognition || window.webkitSpeechRecognition)
-        return null;
-      if (iOSNonSafari) {
-        return (
-          "On iPhone, Apple only gives the speech API to Safari. Open this page in Safari — " +
-          "or just tap a side to score."
-        );
-      }
-      if (isFirefox) {
-        return (
-          "Firefox has no speech recognition. Chrome, Edge or Safari will listen — " +
-          "or just tap a side to score."
-        );
-      }
-      return (
-        "This browser has no speech recognition. Chrome, Edge or Safari will listen — " +
-        "or just tap a side to score."
-      );
-    }
-
-    // Called after the browser refuses the mic, to say which of the two reasons it was.
-    function explainRefusal() {
-      if (embedded) {
-        caption(
-          "The preview frame won't pass the mic through. Open this page in its own tab, " +
-            "then tap the mic again.",
-          true,
-          true,
-        );
-        return;
-      }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        caption(
-          "Microphone blocked for this page. Allow it in the browser's site settings, " +
-            "then tap the mic again.",
-          true,
-          true,
-        );
-        return;
-      }
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then(function (stream) {
-          stream.getTracks().forEach(function (t) {
-            t.stop();
-          });
-          // Mic itself is fine, so it is speech recognition specifically that was refused.
-          caption(
-            "This page can use the mic, but speech recognition was refused. Check the site " +
-              "permissions, then tap the mic again.",
-            true,
-            true,
-          );
-        })
-        .catch(function () {
-          caption(
-            "Microphone blocked for this page. Click the permission icon in the address bar, " +
-              "allow the microphone, then tap the mic again.",
-            true,
-            true,
-          );
-        });
-    }
-
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    var rec = null,
-      want = false,
-      restartAt = 0,
-      blocked = false;
-
-    function makeRec() {
-      var r = new SR();
-      r.continuous = true;
-      r.interimResults = true;
-      r.maxAlternatives = 3;
-      r.lang =
-        navigator.language && /^en/i.test(navigator.language)
-          ? navigator.language
-          : "en-GB";
-
-      // Lifecycle events give us a truthful mic state without opening a second
-      // audio stream: audiostart means the browser really opened the mic,
-      // soundstart/speechstart mean it is picking something up right now.
-      r.onstart = function () {
-        micState("starting");
-      };
-      r.onaudiostart = function () {
-        micState("live");
-      };
-      r.onsoundstart = function () {
-        hearing();
-      };
-      r.onspeechstart = function () {
-        hearing();
-      };
-      r.onspeechend = function () {
-        micState("live");
-      };
-      r.onsoundend = function () {
-        micState("live");
-      };
-      r.onaudioend = function () {
-        micState("starting");
-      };
-
-      r.onresult = function (e) {
-        hearing(); // fallback for browsers that skip the sound events
-        if (Date.now() < speakGuardUntil) return; // don't hear our own announcement
-        for (var i = e.resultIndex; i < e.results.length; i++) {
-          var res = e.results[i];
-          if (!res.isFinal) {
-            if (res[0] && res[0].transcript.trim())
-              caption("“" + res[0].transcript.trim() + "”");
-            continue;
-          }
-          var cmds = [],
-            heardText = "";
-          for (var k = 0; k < res.length; k++) {
-            var txt = res[k].transcript.trim();
-            if (!txt) continue;
-            if (!heardText) heardText = txt;
-            var got = parse(txt);
-            if (got.length) {
-              cmds = got;
-              heardText = txt;
-              break;
-            }
-          }
-          if (heardText)
-            caption(
-              "“" + heardText + "”" + (cmds.length ? "" : "  ·  no command"),
-            );
-          if (cmds.length) run(cmds);
-        }
-      };
-
-      r.onerror = function (e) {
-        if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-          blocked = true;
-          want = false;
-          micState("off");
-          explainRefusal();
-        } else if (e.error === "audio-capture") {
-          want = false;
-          micState("off");
-          caption("No microphone available on this device", true);
-        }
-        // no-speech / aborted / network fall through to onend, which restarts
-      };
-
-      r.onend = function () {
-        micState(want ? "starting" : "off");
-        if (!want) return;
-        var wait = Math.max(0, 350 - (Date.now() - restartAt));
-        setTimeout(start, wait);
-      };
-
-      return r;
-    }
-
-    function start() {
-      if (!SR || !want) return;
-      if (!rec) rec = makeRec();
-      restartAt = Date.now();
-      try {
-        rec.start();
-      } catch (e) {
-        setTimeout(function () {
-          if (want) {
-            try {
-              rec.start();
-            } catch (e2) {}
-          }
-        }, 500);
-      }
-    }
-
-    /* off = not listening, starting = stream not open yet, live = mic captured,
-     hearing = sound arriving this moment */
-    var hearTimer = null;
-
-    function micState(state) {
-      var m = $("mic");
-      m.classList.remove("starting", "live", "hearing");
-      m.classList.toggle("on", state !== "off");
-      if (state !== "off")
-        m.classList.add(state === "hearing" ? "live" : state);
-      if (state === "hearing") m.classList.add("live", "hearing");
-      m.setAttribute("aria-pressed", String(!!want));
-      m.setAttribute(
-        "aria-label",
-        state === "off"
-          ? "Start listening"
-          : state === "starting"
-            ? "Opening the microphone"
-            : "Listening — tap to stop",
-      );
-    }
-
-    function hearing() {
-      var m = $("mic");
-      m.classList.remove("starting");
-      m.classList.add("on", "live", "hearing");
-      clearTimeout(hearTimer);
-      hearTimer = setTimeout(function () {
-        m.classList.remove("hearing");
-      }, 700);
-    }
-
-    function toggleMic() {
-      var why = voiceBlocker();
-      if (why) {
-        caption(why, true, true);
-        return;
-      }
-      unlockAudio();
-      if (want) {
-        want = false;
-        try {
-          rec && rec.stop();
-        } catch (e) {}
-        micState("off");
-        caption("Listening off");
-      } else {
-        want = true;
-        blocked = false;
-        start();
-        caption(
-          "Listening — call “" +
-            callPhrase("a") +
-            "” or “" +
-            callPhrase("b") +
-            "”",
-        );
-      }
     }
 
     /* ---------- screen wake lock ----------
@@ -2344,7 +1889,6 @@
       point("b");
     });
     $("undo").addEventListener("click", undo);
-    $("mic").addEventListener("click", toggleMic);
 
     $("overNext").addEventListener("click", function (e) {
       e.stopPropagation();
@@ -2371,8 +1915,7 @@
         var k = id === "inA" ? "a" : "b";
         S.names[k] = this.value.trim() || (k === "a" ? "Team A" : "Team B");
         setName(k === "a" ? "nameA" : "nameB", S.names[k]);
-        updateCmdHelp();
-        save();
+          save();
       });
       $(id).addEventListener("blur", render);
     });
@@ -2433,12 +1976,6 @@
     /* ---------- how-to page ---------- */
     function showIntro() {
       // reflect the current team names, in case it's reopened after renaming
-      $("introCall").textContent =
-        "Say “" +
-        callPhrase("a") +
-        "” or “" +
-        callPhrase("b") +
-        "” every time someone scores.";
       $("intro").hidden = false;
     }
     function hideIntro() {
@@ -2469,149 +2006,6 @@
       }
     });
 
-    /* ---------- voice status readout ---------- */
-    function browserName() {
-      if (iOSNonSafari) return "This browser on iPhone";
-      if (isFirefox) return "Firefox";
-      if (/Edg\//.test(UA)) return "Edge";
-      if (/Chrome\//.test(UA)) return "Chrome";
-      if (/Safari/.test(UA)) return "Safari";
-      return "This browser";
-    }
-
-    function showVoiceStatus() {
-      var box = $("vstat"),
-        txt = $("vtext"),
-        tab = $("ownTab");
-      var why = voiceBlocker();
-      box.classList.remove("ok", "warn", "bad");
-
-      if (why) {
-        box.classList.add("bad");
-        txt.textContent = why;
-        tab.hidden = !embedded;
-        return;
-      }
-      if (embedded) {
-        box.classList.add("warn");
-        txt.textContent =
-          browserName() +
-          " can listen, but this page is running inside a preview " +
-          "frame that blocks the microphone. Open it in its own tab and voice will work.";
-        tab.hidden = false;
-        return;
-      }
-      box.classList.add("ok");
-      txt.textContent =
-        browserName() +
-        " can listen. Tap the mic and allow the microphone when asked.";
-      tab.hidden = true;
-    }
-
-    $("ownTab").addEventListener("click", function () {
-      window.open(location.href, "_blank", "noopener");
-    });
-
-    /* ---------- microphone test ----------
-     Opens its own short-lived audio stream and draws the real input level, so
-     you can confirm the hardware is picking you up. Recognition is paused for
-     the duration — on iOS the two contend for the audio session. */
-    var testing = false;
-
-    $("micTest").addEventListener("click", function () {
-      if (testing) return;
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        caption("This browser can't open the microphone for a test", true);
-        return;
-      }
-      testing = true;
-
-      var resume = want;
-      if (want) {
-        want = false;
-        try {
-          rec && rec.stop();
-        } catch (e) {}
-        micState("off");
-      }
-
-      var btn = this,
-        meter = $("meter"),
-        fill = $("meterFill");
-      btn.textContent = "Starting…";
-      meter.hidden = false;
-      unlockAudio();
-
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then(function (stream) {
-          var Ctx = window.AudioContext || window.webkitAudioContext;
-          var ctx = new Ctx();
-          var src = ctx.createMediaStreamSource(stream);
-          var an = ctx.createAnalyser();
-          an.fftSize = 1024;
-          src.connect(an);
-
-          var buf = new Uint8Array(an.fftSize);
-          var until = Date.now() + 8000;
-          var peak = 0;
-
-          btn.textContent = "Say something…";
-
-          (function draw() {
-            an.getByteTimeDomainData(buf);
-            var sum = 0;
-            for (var i = 0; i < buf.length; i++) {
-              var v = (buf[i] - 128) / 128;
-              sum += v * v;
-            }
-            var level = Math.min(1, Math.sqrt(sum / buf.length) * 4.5);
-            if (level > peak) peak = level;
-            fill.style.width = (level * 100).toFixed(1) + "%";
-
-            if (Date.now() < until) {
-              requestAnimationFrame(draw);
-              return;
-            }
-
-            stream.getTracks().forEach(function (t) {
-              t.stop();
-            });
-            try {
-              ctx.close();
-            } catch (e) {}
-            fill.style.width = "0%";
-            meter.hidden = true;
-            btn.textContent =
-              peak > 0.06
-                ? "Microphone works — test again"
-                : "Heard nothing — test again";
-            caption(
-              peak > 0.06
-                ? "Microphone is picking you up"
-                : "The mic opened but no sound came through — check it isn't muted",
-              peak <= 0.06,
-            );
-            testing = false;
-            if (resume) {
-              want = true;
-              blocked = false;
-              start();
-            }
-          })();
-        })
-        .catch(function () {
-          meter.hidden = true;
-          btn.textContent = "Test the microphone";
-          testing = false;
-          explainRefusal();
-          if (resume) {
-            want = true;
-            start();
-          }
-        });
-    });
-
     /* ---------- go ---------- */
     load();
     lastA = S.a;
@@ -2622,16 +2016,344 @@
     if (document.fonts && document.fonts.ready)
       document.fonts.ready.then(fitNames);
     acquireWake();
-    showVoiceStatus();
     if (!S.seen) showIntro();
-    if (voiceBlocker()) {
-      $("mic").classList.add("dead");
-      caption(voiceBlocker(), true, true);
-    } else if (embedded) {
-      caption(
-        "Open this page in its own tab to use voice — tap a side to score meanwhile",
-        true,
-      );
-    }
+
+    /* The gesture recogniser lives in a separate module script (it needs ESM
+       imports), so hand it the only three things it needs from in here. */
+    window.RallyCaller = {
+      point: point,
+      undo: undo,
+      resetGame: resetGame,
+      caption: caption,
+      names: function () {
+        return { a: S.names.a, b: S.names.b };
+      },
+    };
   })();
+</script>
+
+<script type="module">
+  /* ---------- gesture scoring ----------
+     Thumbs up scores the blue side, thumbs down the green one.
+     Three fingers undoes. An open hand — all five — restarts the game.
+
+     Fingers are counted from the hand landmarks rather than trusting a trained
+     label, and "extended" is judged against the wrist, so it works whichever
+     way the hand is turned.
+
+     The model loads from a CDN, so this needs a page that allows external
+     scripts. In a sandboxed preview it fails cleanly and says so. */
+
+  const CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+  const HAND_MODEL =
+    "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
+
+  const HOLD_MS = 650;         // thumbs up / down -> a point
+  const UNDO_HOLD_MS = 800;    // three fingers -> undo
+  const RESET_HOLD_MS = 1500;  // open hand -> restart (destructive, so slower)
+  const COOLDOWN_MS = 1200;
+  const MIN_CONFIDENCE = 0.65;
+
+  const EXTEND_RATIO = 1.12;   // a fingertip this much further out than its knuckle is up
+
+  const $ = (id) => document.getElementById(id);
+  const btn = $("camBtn");
+  const panel = $("cam");
+  const video = $("camVideo");
+  const canvas = $("camOverlay");
+  const ring = $("camRing");
+  const ringProgress = $("camRingProgress");
+  const pill = $("camPill");
+  const flip = $("camFlip");
+
+  const app = () => window.RallyCaller || {};
+  const say = (text, warn) => {
+    const c = app().caption;
+    if (c) c(text, !!warn, !!warn);
+  };
+
+  let ctx = null;
+  let recognizer = null;
+  let drawing = null;
+  let HandConnections = null;
+  let stream = null;
+  let running = false;
+  let raf = 0;
+  let facing = "user"; // the screen faces the players, so the front camera does too
+  let lastTime = -1;
+  let heldGesture = null;
+  let heldSince = 0;
+  let cooldownUntil = 0;
+
+  /* ---------- reading the hand ---------- */
+
+  // Distance from the wrist decides whether a finger is out, so the count holds
+  // up whether the hand is upright, tilted or upside down.
+  function countFingers(marks) {
+    if (!marks || marks.length < 21) return 0;
+    const wrist = marks[0];
+    const far = (p) => Math.hypot(p.x - wrist.x, p.y - wrist.y);
+
+    let n = 0;
+    for (const [tip, knuckle] of [[8, 6], [12, 10], [16, 14], [20, 18]]) {
+      if (far(marks[tip]) > far(marks[knuckle]) * EXTEND_RATIO) n++;
+    }
+
+    // The thumb folds across the palm rather than curling, so it is measured
+    // against the pinky knuckle: an extended thumb sits further from that side
+    // of the hand than its own joint does, a tucked one swings closer.
+    const pinky = marks[17];
+    const span = (p) => Math.hypot(p.x - pinky.x, p.y - pinky.y);
+    if (span(marks[4]) > span(marks[3])) n++;
+
+    return n;
+  }
+
+  function thumbDirection(marks) {
+    if (!marks || marks.length < 21) return null;
+    const wrist = marks[0], knuckle = marks[2], tip = marks[4];
+    const far = (pt) => Math.hypot(pt.x - wrist.x, pt.y - wrist.y);
+    if (far(tip) < far(knuckle) * 1.25) return null;
+    let curled = 0;
+    for (const [t, mid] of [[8, 6], [12, 10], [16, 14], [20, 18]]) {
+      if (far(marks[t]) < far(marks[mid]) * 1.05) curled++;
+    }
+    if (curled < 3) return null;
+    const dy = tip.y - knuckle.y;
+    const dx = tip.x - knuckle.x;
+    if (Math.abs(dx) > Math.abs(dy) * 1.2) return null;  // sideways scores nothing
+    return dy < 0 ? "up" : "down";
+  }
+
+  function setPill(text, cls) {
+    pill.textContent = text;
+    pill.className = "camPill" + (cls ? " " + cls : "");
+  }
+
+  function idlePill() {
+    setPill("Thumbs up = " + app().names().a + " · down = " + app().names().b);
+  }
+
+  /* ---------- model + camera ---------- */
+
+  async function loadModel() {
+    const vision = await import(CDN + "/vision_bundle.mjs");
+    const { GestureRecognizer, FilesetResolver, DrawingUtils } = vision;
+    const fileset = await FilesetResolver.forVisionTasks(CDN + "/wasm");
+
+    async function build(delegate) {
+      return GestureRecognizer.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: HAND_MODEL, delegate },
+        runningMode: "VIDEO",
+        numHands: 2,
+      });
+    }
+    let rec;
+    try {
+      rec = await build("GPU");
+    } catch (e) {
+      rec = await build("CPU"); // some phones have no usable GPU delegate
+    }
+    return { rec, GestureRecognizer, DrawingUtils };
+  }
+
+  async function openCamera() {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: facing, width: { ideal: 960 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    video.srcObject = stream;
+    await new Promise((res) => {
+      if (video.readyState >= 1) return res();
+      video.onloadedmetadata = () => res();
+    });
+    await video.play();
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    panel.classList.toggle("mirror", facing === "user");
+  }
+
+  function closeCamera() {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+  }
+
+  async function startCam() {
+    panel.hidden = false;
+    btn.setAttribute("aria-pressed", "true");
+    setPill("Loading gesture model…");
+
+    try {
+      if (!recognizer) {
+        const loaded = await loadModel();
+        recognizer = loaded.rec;
+        HandConnections = loaded.GestureRecognizer.HAND_CONNECTIONS;
+        ctx = canvas.getContext("2d");
+        drawing = new loaded.DrawingUtils(ctx);
+      }
+      await openCamera();
+      running = true;
+      idlePill();
+      raf = requestAnimationFrame(loop);
+    } catch (err) {
+      stopCam();
+      const msg = String((err && err.message) || err);
+      if (/import|fetch|network|Failed/i.test(msg)) {
+        say("The gesture model is blocked here — open the page on your own site, not in a preview frame", true);
+      } else if (/NotAllowed|Permission/i.test(msg)) {
+        say("Camera blocked — allow the camera, then tap the camera button again", true);
+      } else {
+        say("Camera could not start: " + msg, true);
+      }
+    }
+  }
+
+  function stopCam() {
+    running = false;
+    cancelAnimationFrame(raf);
+    closeCamera();
+    panel.hidden = true;
+    ring.classList.remove("on");
+    heldGesture = null;
+    btn.setAttribute("aria-pressed", "false");
+  }
+
+  /* ---------- loop ---------- */
+
+  function loop() {
+    if (!running) return;
+    if (video.currentTime !== lastTime && video.videoWidth) {
+      lastTime = video.currentTime;
+      const now = performance.now();
+      try {
+        handle(recognizer.recognizeForVideo(video, now), now);
+      } catch (e) {
+        /* a dropped frame is not worth stopping for */
+      }
+    }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function fire(action, now) {
+    const api = app();
+    if (action === "a" && api.point) api.point("a");
+    else if (action === "b" && api.point) api.point("b");
+    else if (action === "undo" && api.undo) api.undo();
+    else if (action === "reset" && api.resetGame) api.resetGame();
+    cooldownUntil = now + COOLDOWN_MS;
+    heldGesture = null;
+    ring.classList.remove("on");
+  }
+
+  function handle(result, now) {
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (drawing && result.landmarks) {
+        for (const marks of result.landmarks) {
+          drawing.drawConnectors(marks, HandConnections, {
+            color: "rgba(238,242,238,0.55)",
+            lineWidth: 2,
+          });
+          drawing.drawLandmarks(marks, { color: "rgba(238,242,238,0.9)", radius: 2 });
+        }
+      }
+    }
+
+    if (now < cooldownUntil) {
+      heldGesture = null;
+      ring.classList.remove("on");
+      setPill("Counted");
+      return;
+    }
+
+    const hands = result.landmarks || [];
+    const counts = hands.map(countFingers);
+
+    // Finger counts are checked first: an open hand is never a thumbs up.
+    // the trained classifier also recognises an open palm, so either route counts
+    let openPalm = false;
+    for (const hand of result.gestures || []) {
+      const top = hand[0];
+      if (top && top.categoryName === "Open_Palm" && top.score >= MIN_CONFIDENCE) openPalm = true;
+    }
+
+    let gesture = null;
+    if (counts.indexOf(5) !== -1 || openPalm) {
+      gesture = "reset";
+    } else if (counts.indexOf(3) !== -1) {
+      gesture = "undo";
+    } else {
+      let best = null;
+      for (const hand of result.gestures || []) {
+        const top = hand[0];
+        if (!top) continue;
+        if (top.categoryName === "Thumb_Up" || top.categoryName === "Thumb_Down") {
+          if (!best || top.score > best.score) best = top;
+        }
+      }
+      if (best && best.score >= MIN_CONFIDENCE) {
+        gesture = best.categoryName === "Thumb_Up" ? "a" : "b";
+      } else {
+        const dirs = hands.map(thumbDirection).filter(Boolean);
+        if (dirs.indexOf("up") !== -1) gesture = "a";
+        else if (dirs.indexOf("down") !== -1) gesture = "b";
+      }
+    }
+
+    if (!gesture) {
+      heldGesture = null;
+      ring.classList.remove("on");
+      if (counts.length) setPill(counts.join(" + ") + " fingers");
+      else idlePill();
+      return;
+    }
+
+    if (heldGesture !== gesture) {
+      heldGesture = gesture;
+      heldSince = now;
+    }
+
+    const spec = {
+      a: { ms: HOLD_MS, colour: "#1668BE", label: app().names().a, cls: "a" },
+      b: { ms: HOLD_MS, colour: "#17A85F", label: app().names().b, cls: "b" },
+      undo: { ms: UNDO_HOLD_MS, colour: "#D6A55C", label: "Undo", cls: "warn" },
+      reset: { ms: RESET_HOLD_MS, colour: "#F2A0A0", label: "Restart game", cls: "warn" },
+    }[gesture];
+
+    const progress = Math.min((now - heldSince) / spec.ms, 1);
+
+    ring.classList.add("on");
+    ringProgress.style.stroke = spec.colour;
+    ringProgress.style.strokeDashoffset = String(264 * (1 - progress));
+    setPill(spec.label + " — hold " + Math.round(progress * 100) + "%", spec.cls);
+
+    if (progress >= 1) fire(gesture, now);
+  }
+
+  /* ---------- wiring ---------- */
+
+  btn.addEventListener("click", () => {
+    if (running || !panel.hidden) stopCam();
+    else startCam();
+  });
+
+  flip.addEventListener("click", async () => {
+    if (!running) return;
+    facing = facing === "user" ? "environment" : "user";
+    closeCamera();
+    try {
+      await openCamera();
+    } catch (e) {
+      say("Could not switch camera", true);
+      stopCam();
+    }
+  });
+
+  // stop the camera when the page is hidden, so it never records in the background
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" && running) stopCam();
+  });
 </script>
