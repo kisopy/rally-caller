@@ -1673,6 +1673,22 @@
       say((S.matchWon ? "Match. " : "Game. ") + S.names[team]);
     }
 
+    /* ---------- on-screen message ----------
+       The pill above the bar: short confirmations, and anything the gesture
+       module needs to tell you. Warnings stay up longer, since they usually
+       ask for something. */
+    function caption(text, warn, hold) {
+      var el = $("heard");
+      if (!el) return;
+      clearTimeout(captionTimer);
+      el.textContent = text;
+      el.classList.toggle("warn", !!warn);
+      el.classList.add("on");
+      captionTimer = setTimeout(function () {
+        el.classList.remove("on");
+      }, (hold || warn) ? 5000 : 2200);
+    }
+
     /* ---------- render ---------- */
     var lastA = 0,
       lastB = 0;
@@ -1873,10 +1889,7 @@
     }, 30000);
 
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible") {
-        acquireWake();
-        if (want) start();
-      }
+      if (document.visibilityState === "visible") acquireWake();
     });
 
     /* ---------- wiring ---------- */
